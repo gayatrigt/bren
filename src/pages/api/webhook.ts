@@ -176,8 +176,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // You can access the request body using req.body
     const body = req.body as NeynarWebhook;
 
+    console.log(JSON.stringify(body, null, 2))
+
     if (!body?.data) {
-        console.error('Invalid request body', JSON.stringify(body.data, null, 2));
+        console.error('Invalid request body');
         return res.status(400).json({ message: 'Invalid request body' });
     }
 
