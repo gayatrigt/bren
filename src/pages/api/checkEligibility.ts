@@ -21,6 +21,7 @@ interface reqBody {
     "isAllies": boolean;
     "isSplitter": boolean;
     "isFollowingChannel": boolean;
+    "isInvited": boolean;
 }
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
@@ -57,21 +58,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             isFollowingChannel: boolean
         ): number => {
             let maxAllowancePoints = 0;
+            let userType = ""
 
             if (isPowerBadgeHolder) {
                 maxAllowancePoints = 100;
+                userType = "POWER_BADGE"
             }
 
             if (isFollowingChannel) {
                 maxAllowancePoints = Math.max(maxAllowancePoints, 25);
+                userType = "FOLLOWER"
             }
 
             if (isSplitter) {
                 maxAllowancePoints = Math.max(maxAllowancePoints, 300);
+                userType = "SPLITTERS"
             }
 
             if (isAllies) {
                 maxAllowancePoints = Math.max(maxAllowancePoints, 500);
+                userType = "ALLIES"
             }
 
             return maxAllowancePoints;
