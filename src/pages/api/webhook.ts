@@ -187,6 +187,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ message: 'Own Bot is not allowed to tip' });
     }
 
+    const isReplyAlreadyExists = await checkBotReply(body.data.hash)
+
+    if (!!isReplyAlreadyExists) {
+        return res.status(200).json({ message: 'Already replied' });
+    }
+
+
     // if the user is following bren channel
     // if (!isFollowingBren) {
     //     console.error('User not following bren.');
