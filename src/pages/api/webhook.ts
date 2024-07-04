@@ -184,7 +184,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const botFid = 600098
     if (body.data.author.fid === botFid) {
         console.error('Own Bot is not allowed to tip');
-        return res.status(400).json({ message: 'Own Bot is not allowed to tip' });
+        return res.status(200).json({ message: 'Own Bot is not allowed to tip' });
     }
 
     // if the user is following bren channel
@@ -249,7 +249,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const senderEthAddress = body.data.author.verified_addresses.eth_addresses[0];
     if (!senderEthAddress) {
         console.error('You have not verified your eth address');
-        return res.status(400).json({ message: 'You have not verified your eth address' });
+        return res.status(200).json({ message: 'You have not verified your eth address' });
     }
 
     let recipientFid: number | undefined;
@@ -264,12 +264,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (recipientFid === body.data.author.fid) {
         console.error('You cannot tip yourself');
-        return res.status(400).json({ message: 'You cannot tip yourself' });
+        return res.status(200).json({ message: 'You cannot tip yourself' });
     }
 
     if (!recipientFid) {
         console.error('No recipient, ignored');
-        return res.status(401).json({ message: 'No recipient, ignored' });
+        return res.status(201).json({ message: 'No recipient, ignored' });
     }
 
     // grab the amount fo the tip from the message, format: $250 bren using regex, amount should have $250 followed by bren
@@ -306,7 +306,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.log('cast created');
         }
 
-        return res.status(400).json({ tipAmount, message: 'The tip amount is invalid' });
+        return res.status(200).json({ tipAmount, message: 'The tip amount is invalid' });
     }
 
     if (!hashtagValue) {
@@ -321,14 +321,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.log('cast created');
         }
 
-        return res.status(400).json({ tipAmount, message: 'Please tip with a value' });
+        return res.status(200).json({ tipAmount, message: 'Please tip with a value' });
     }
 
     // check the user allowance 
     const primaryAddress = body.data.author.verified_addresses.eth_addresses[0]
     if (!primaryAddress) {
         console.error('You have not verified your eth address');
-        return res.status(400).json({ message: 'You have not verified your eth address' });
+        return res.status(200).json({ message: 'You have not verified your eth address' });
     }
 
     const allowance = await getUserAllowance(primaryAddress);
@@ -366,13 +366,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         }
 
-        return res.status(400).json({ message: 'You have reached your daily allowance' });
+        return res.status(200).json({ message: 'You have reached your daily allowance' });
     }
 
     const recipientDetails = await getUserById(recipientFid.toString(), body.data.author.fid.toString())
 
     if (!recipientDetails) {
-        return res.status(400).json({ message: 'Enter a valid recipient' });
+        return res.status(200).json({ message: 'Enter a valid recipient' });
     }
 
     if (recipientDetails.verified_addresses.eth_addresses[0] === undefined) {
