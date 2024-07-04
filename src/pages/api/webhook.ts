@@ -1,11 +1,10 @@
+import { UserType } from '@prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NeynarWebhook } from '~/contracts/NeynarWebhook';
 import { db } from '~/server/db';
-import { Channel, getUserById } from '~/server/neynar';
+import { getUserById } from '~/server/neynar';
 import { stack } from '~/server/stack';
 const sdk = require('api')('@neynar/v2.0#281yklumre2o7');
-import qs from "qs"
-import { UserType } from '@prisma/client';
 
 // add body-parser to parse the request body
 export const config = {
@@ -176,6 +175,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Handle the POST request here
     // You can access the request body using req.body
     const body = req.body as NeynarWebhook;
+
+    if (!body || !body.data) {
+        console.error('Invalid request body', JSON.stringify(body.data, null, 2));
+        return res.status(400).json({ message: 'Invalid request body' });
+    }
 
     // grab the text from the message
     const message = body.data.text;
