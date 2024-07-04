@@ -276,7 +276,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let tipAmount = 0
     let hashtagValue = '';
 
-    const amountFromText = message.match(/\$?\s*(\d+)\s*\$?\s*bren\b/i);
+    const amountFromText = message.match(/\$?\s*(\d+)\s*\$?\s*tren\b/i);
 
     if (amountFromText?.[1]) {
         tipAmount = parseInt(amountFromText?.[1]
