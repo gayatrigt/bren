@@ -58,15 +58,22 @@ interface ExtractedData {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    console.log('Webhook received');
+
     if (req.method !== 'POST') {
         console.error('Method Not Allowed');
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    res.status(200).json({ message: 'Webhook received' });
-
     try {
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+
         const webhookData = req.body as WebhookResponse;
+
+        if (!webhookData || !webhookData.data) {
+            console.error('Invalid webhook data structure');
+            return res.status(400).json({ message: 'Invalid webhook data structure' });
+        }
 
         const extractedData: ExtractedData = {
             hash: webhookData.data.hash,
@@ -79,12 +86,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             mentionedProfiles: webhookData.data.mentioned_profiles,
         };
 
-        console.log('Extracted Data:', extractedData);
+        console.log('Extracted Data:', JSON.stringify(extractedData, null, 2));
 
-        // Process the data or send a response as needed
-        res.status(200).json({ message: 'Webhook received and processed successfully' });
+        res.status(200).json({ message: 'Webhook processed successfully', data: extractedData });
     } catch (error) {
         console.error('Error processing webhook:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
+
+    console.log('Webhook processing completed');
 }
