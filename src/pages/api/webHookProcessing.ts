@@ -1,6 +1,8 @@
 import { Cast, Root } from "~/contracts/NeynarCast";
 
 export async function processWebhookData(hash: string) {
+    console.log('processWebhookData started');
+
     try {
         const castHash = hash;
         console.log("Hash:", castHash);

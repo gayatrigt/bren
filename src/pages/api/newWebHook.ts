@@ -74,6 +74,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Process the hash asynchronously
         await processWebhookData(hash);
 
+        console.log('processWebhookData completed');
+
     } catch (error) {
         console.error('Error processing webhook:', error);
         res.status(500).json({ message: 'Internal Server Error' });

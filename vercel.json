@@ -1,0 +1,7 @@
+{
+    "functions": {
+        "api/newWebHook.ts": {
+            "maxDuration": 60
+        }
+    }
+}
