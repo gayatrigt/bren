@@ -1,6 +1,6 @@
 const sdk = require('api')('@neynar/v2.0#281yklumre2o7');
 
-export const getUserById = async (fid: string, viewer_fid: string): Promise<User | null | undefined> => {
+export const getUserById = async (fid: number, viewer_fid: number): Promise<User | null | undefined> => {
     try {
         const response: GetUserByIdResponse = await sdk.userBulk({ viewer_fid, fids: [fid], api_key: process.env.NEYNAR_API_KEY })
         return response.data.users[0]
@@ -27,7 +27,7 @@ export interface Channel {
     lead: User;
     hosts: User[];
     moderator: User;
-  }
+}
 
 export interface User {
     object: string

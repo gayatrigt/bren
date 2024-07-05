@@ -381,41 +381,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ message: 'You have reached your daily allowance' });
     }
 
-    const recipientDetails = await getUserById(recipientFid.toString(), body.data.author.fid.toString())
+    // const recipientDetails = await getUserById(recipientFid.toString(), body.data.author.fid.toString())
 
-    if (!recipientDetails) {
-        return res.status(200).json({ message: 'Enter a valid recipient' });
-    }
+    // if (!recipientDetails) {
+    //     return res.status(200).json({ message: 'Enter a valid recipient' });
+    // }
 
-    if (recipientDetails.verified_addresses.eth_addresses[0] === undefined) {
-        throw new Error('Recipient Ethereum address is required');
-    }
+    // if (recipientDetails.verified_addresses.eth_addresses[0] === undefined) {
+    //     throw new Error('Recipient Ethereum address is required');
+    // }
 
-    const data = {
-        amount: tipAmount,
-        fromFid: body.data.author.fid,
-        fromAddress: senderEthAddress,
-        fromUsername: body.data.author.username,
-        toUsername: recipientDetails.username,
-        toFid: recipientFid,
-        toAddress: recipientDetails.verified_addresses.eth_addresses[0],
-        text: message,
-        value: hashtagValue,
-        castHash: body.data.hash,
-        parentCastHash: body.data.parent_hash ? body.data.parent_hash : null,
-        link: `https://warpcast.com/${body.data.author.username}/${body.data.hash}`,
-    }
+    // const data = {
+    //     amount: tipAmount,
+    //     fromFid: body.data.author.fid,
+    //     fromAddress: senderEthAddress,
+    //     fromUsername: body.data.author.username,
+    //     toUsername: recipientDetails.username,
+    //     toFid: recipientFid,
+    //     toAddress: recipientDetails.verified_addresses.eth_addresses[0],
+    //     text: message,
+    //     value: hashtagValue,
+    //     castHash: body.data.hash,
+    //     parentCastHash: body.data.parent_hash ? body.data.parent_hash : null,
+    //     link: `https://warpcast.com/${body.data.author.username}/${body.data.hash}`,
+    // }
 
-    // casting a reply to the user that the tip has been sent
-    const castMessage = `Hey ${body.data.author.username}!\nYou have successfully tipped ${tipAmount} $bren to ${data.toUsername}.\nAllowance left : ${allowanceLeft < 0 ? 0 : allowanceLeft} $bren`
-    await reply(body.data.hash, castMessage, encodeURIComponent("Tip Successfull"), "", encodeURIComponent(`You have successfully tipped ${tipAmount} $bren`))
+    // // casting a reply to the user that the tip has been sent
+    // const castMessage = `Hey ${body.data.author.username}!\nYou have successfully tipped ${tipAmount} $bren to ${data.toUsername}.\nAllowance left : ${allowanceLeft < 0 ? 0 : allowanceLeft} $bren`
+    // await reply(body.data.hash, castMessage, encodeURIComponent("Tip Successfull"), "", encodeURIComponent(`You have successfully tipped ${tipAmount} $bren`))
 
-    console.log('success');
+    // console.log('success');
 
-    await db.transaction.create({ data });
+    // await db.transaction.create({ data });
 
-    // send a message to the user that the tip has been sent
-    return res.status(200).json({ data, message: 'Received POST request' });
+    // // send a message to the user that the tip has been sent
+    // return res.status(200).json({ data, message: 'Received POST request' });
 
 }
 

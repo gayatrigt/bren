@@ -33,11 +33,11 @@ model User {
 
 model Transaction {
     castHash       String     @id
-    fromAddress    String?
-    fromUser       User?      @relation("FromUser", fields: [fromAddress], references: [walletAddress])
+    fromAddress    String
+    fromUser       User       @relation("FromUser", fields: [fromAddress], references: [walletAddress])
     fromUsername   String
     fromFid        Int
-    toAddress      String
+    toAddress      String?
     toUsername     String
     toFid          Int
     text           String

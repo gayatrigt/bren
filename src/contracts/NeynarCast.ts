@@ -20,8 +20,8 @@ export interface Cast {
     mentioned_profiles: MentionedProfile[]
 }
 
-interface ParentAuthor {
-    fid: any
+export interface ParentAuthor {
+    fid: number
 }
 
 interface Author {
