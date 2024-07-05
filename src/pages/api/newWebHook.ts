@@ -68,11 +68,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         console.log('Extracted Hash:', hash);
 
-        // Respond to the webhook immediately
-        res.status(200).json({ message: 'Webhook received successfully' });
-
         // Process the hash asynchronously
         processWebhookData(hash).catch(error => console.error('Async processing error:', error));
+
+        // Respond to the webhook immediately
+        res.status(200).json({ message: 'Webhook received successfully' });
 
         console.log('processWebhookData completed');
 
