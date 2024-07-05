@@ -176,15 +176,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // You can access the request body using req.body
     const body = req.body as NeynarWebhook;
 
-    console.log(JSON.stringify(body, null, 2))
-
     if (!body?.data) {
         console.error('Invalid request body');
         return res.status(400).json({ message: 'Invalid request body' });
     }
 
     // grab the text from the message
-    const message = body.data.text;
+    const message = body.data?.text;
+    const castHash = body.data?.hash
 
     // returning message: bot is not allowed to tip if req is being sent by bot
     const botFid = 600098
