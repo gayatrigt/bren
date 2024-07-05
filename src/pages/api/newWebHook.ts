@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-
+import { processWebhookData } from "./webHookProcessing";
 
 interface WebhookResponse {
     created_at: number;
@@ -46,17 +46,6 @@ interface WebhookResponse {
     };
 }
 
-interface ExtractedData {
-    hash: string;
-    authorFid: number;
-    username: string;
-    displayName: string;
-    pfpUrl: string;
-    powerBadge: boolean;
-    text: string;
-    mentionedProfiles: unknown[];
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log('Webhook received');
 
@@ -75,20 +64,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: 'Invalid webhook data structure' });
         }
 
-        const extractedData: ExtractedData = {
-            hash: webhookData.data.hash,
-            authorFid: webhookData.data.author.fid,
-            username: webhookData.data.author.username,
-            displayName: webhookData.data.author.display_name,
-            pfpUrl: webhookData.data.author.pfp_url,
-            powerBadge: webhookData.data.author.power_badge,
-            text: webhookData.data.text,
-            mentionedProfiles: webhookData.data.mentioned_profiles,
-        };
+        const hash = webhookData.data.hash;
 
-        console.log('Extracted Data:', JSON.stringify(extractedData, null, 2));
+        console.log('Extracted Hash:', hash);
 
-        res.status(200).json({ message: 'Webhook processed successfully', data: extractedData });
+        // Respond to the webhook immediately
+        res.status(200).json({ message: 'Webhook received successfully' });
+
+        // Process the hash asynchronously
+        await processWebhookData(hash);
+
     } catch (error) {
         console.error('Error processing webhook:', error);
         res.status(500).json({ message: 'Internal Server Error' });
