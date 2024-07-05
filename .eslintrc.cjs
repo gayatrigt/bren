@@ -28,6 +28,7 @@ const config = {
     "@typescript-eslint/restrict-plus-operands": "warn",
     "@typescript-eslint/no-unsafe-return": "warn",
     "@typescript-eslint/prefer-optional-chain": "warn",
+    "@typescript-eslint/prefer-nullish-coalescing": "warn",
     "@typescript-eslint/no-redundant-type-constituents": "warn",
     "@typescript-eslint/consistent-type-imports": [
       "warn",
