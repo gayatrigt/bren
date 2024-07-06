@@ -68,8 +68,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         console.log('Extracted Hash:', hash);
 
-        // Process the hash asynchronously
-        processWebhookData(hash).catch(error => console.error('Async processing error:', error));
+        // Make an API call to process the data
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/process-webhook`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ hash }),
+        }).catch(error => console.error('Error calling process API:', error));
 
         // Respond to the webhook immediately
         res.status(200).json({ message: 'Webhook received successfully' });
