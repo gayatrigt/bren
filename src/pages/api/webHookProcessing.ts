@@ -3,7 +3,10 @@ import { Cast, Root } from "~/contracts/NeynarCast";
 import { db } from "~/server/db";
 import { getUserById } from "~/server/neynar";
 import { stack } from "~/server/stack";
-const sdk = require('api')('@neynar/v2.0#281yklumre2o7');
+import { processTip } from "./functions/processtip";
+import { checkWhitelist } from "./functions/checkWhiteList";
+import { botReply } from "./functions/botReply";
+import { setUserAllowance } from "./functions/setAllowance";
 
 // get cast details from Hash
 // Get the user ans check if exitsts in db
@@ -116,84 +119,91 @@ export async function processWebhookData(hash: string) {
             // Perform actions for existing user
 
             const currentAllowance = await getUserCurrentAllowance(fromAddress);
+            const allowanceLeft = currentAllowance - tipAmount
 
-            if (currentAllowance > tipAmount) {
-                const toDetails = await getUserById(toFid, fromFid)
-
-                if (!toDetails) {
-                    throw new Error('toUser details not found')
-                }
-
-                const toAddress = toDetails.verified_addresses.eth_addresses[0]
-                const toUsername = toDetails.username
-
-                const allowanceLeft = currentAllowance - tipAmount
-
-                const data = {
-                    amount: tipAmount,
-                    fromFid,
-                    fromAddress,
-                    fromUsername,
-                    toUsername,
-                    toFid,
-                    toAddress: toAddress || null,
-                    text: message,
-                    value: hashtagValue,
-                    castHash,
-                    parentCastHash: neynarCast.parent_author ? neynarCast.parent_hash : null,
-                    link: `https://warpcast.com/${fromUsername}/${castHash}`,
-                }
-
-                console.log('Attempting to create transaction in database:', data);
-
-                let createdTransaction;
-                try {
-                    createdTransaction = await db.transaction.create({ data });
-                    console.log('Transaction created successfully:', createdTransaction);
-                } catch (dbError) {
-                    console.error('Failed to create transaction in database:', dbError);
-                    throw new Error('Database transaction creation failed');
-                }
-
-                if (createdTransaction) {
-                    const result = await botReply(
-                        castHash,
-                        `Hey ${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to ${toUsername}.\nAllowance left : ${allowanceLeft < 0 ? 0 : allowanceLeft} $bren`,
-                        "Tip Successful",
-                        "",
-                        `You have successfully tipped ${tipAmount} $bren`
-                    );
-
-                    if (result.success) {
-                        console.log('Reply posted successfully:', result.castHash);
-                    } else {
-                        console.error('Failed to post reply:', result.message);
-                    }
-                } else {
-                    console.error('Transaction was not created in the database, skipping bot reply');
-                }
-
-                if (!createdTransaction) {
-                    console.error('Error in tip processing:', error);
-                    // Here you might want to send a failure message to the user
-                    const errorResult = await botReply(
-                        castHash,
-                        `Hey ${fromUsername}!\nSorry, there was an error processing your tip. Please try again later.`,
-                        "Tip Failed",
-                        "",
-                        "Error processing tip"
-                    );
-                    if (errorResult.success) {
-                        console.log('Error reply posted successfully:', errorResult.castHash);
-                    } else {
-                        console.error('Failed to post error reply:', errorResult.message);
-                    }
-                }
-            }
+            await processTip(
+                tipAmount,
+                currentAllowance,
+                fromFid,
+                fromAddress,
+                fromUsername,
+                toFid,
+                message,
+                hashtagValue,
+                castHash,
+                neynarCast
+            );
 
         } else {
             console.log('New user detected');
             // Perform actions for new user, e.g., create a new user record
+
+            const isPowerBadge = neynarCast.author.power_badge
+
+            const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
+
+            if (result === 'NOT_WHITELISTED') {
+                console.log('User is not whitelisted');
+
+                const result = await botReply(
+                    castHash,
+                    `Hey ${fromUsername}! You are not eligible to tip $bren`,
+                    "Tip Failed",
+                    "",
+                    `Your tip failed as you are not eligible`
+                );
+
+                if (result.success) {
+                    console.log('Reply posted successfully:', result.castHash);
+                } else {
+                    console.error('Failed to post reply:', result.message);
+                }
+
+            } else {
+                console.log(`User is whitelisted as ${result}`);
+
+                try {
+                    const newUser = await db.user.create({
+                        data: {
+                            walletAddress: fromAddress,
+                            fid: fromFid,
+                            display_name: neynarCast.author.display_name,
+                            username: fromUsername,
+                            pfp: neynarCast.author.pfp_url,
+                            isAllowanceGiven: false,
+                            type: result
+                        },
+                    });
+
+                    console.log(`New user created successfully. FID: ${fromFid}`);
+
+                } catch (error) {
+                    console.error(`Error creating new user. FID: ${fromFid}`, error);
+                }
+
+                try {
+                    await setUserAllowance(fromFid, fromAddress, result);
+                    console.log('Allowance set and database updated successfully');
+                } catch (error) {
+                    console.error('Failed to set allowance:', error);
+                }
+
+                const currentAllowance = await getUserCurrentAllowance(fromAddress);
+
+                await processTip(
+                    tipAmount,
+                    currentAllowance,
+                    fromFid,
+                    fromAddress,
+                    fromUsername,
+                    toFid,
+                    message,
+                    hashtagValue,
+                    castHash,
+                    neynarCast
+                );
+
+            }
         }
 
     } catch (error) {
@@ -253,63 +263,4 @@ const getUserAllowance = async (wallet: string): Promise<number> => {
     const allowance: number = await stack.getPoints(wallet, { event: "allowance" });
     return allowance
     // return 10000
-}
-
-interface BotReplyResult {
-    success: boolean;
-    message: string;
-    castHash?: string;
-}
-
-async function botReply(parentHash: string, castText: string, tipStatus: string, msg: string, main: string): Promise<BotReplyResult> {
-    try {
-        // Check if a reply already exists
-        const existingReply = await db.botReply.findUnique({
-            where: {
-                parentHash: parentHash
-            }
-        });
-
-        if (existingReply) {
-            return {
-                success: false,
-                message: "A reply to this cast already exists."
-            };
-        }
-
-        // Post the new reply
-        const response = await sdk.postCast({
-            signer_uuid: process.env.SIGNER_UUID,
-            text: castText,
-            parent: parentHash,
-            embeds: [
-                {
-                    url: `${process.env.NEXT_PUBLIC_BASE_URL}/?tipStatus=${encodeURIComponent(tipStatus)}&msg=${encodeURIComponent(msg)}&main=${encodeURIComponent(main)}`
-                }
-            ],
-        }, { api_key: process.env.NEYNAR_API_KEY });
-
-        const castHash = response.cast.hash;
-
-        // Update the database
-        await db.botReply.create({
-            data: {
-                castHash: castHash,
-                parentHash: parentHash,
-            }
-        });
-
-        return {
-            success: true,
-            message: "Reply posted successfully.",
-            castHash: castHash
-        };
-
-    } catch (error) {
-        console.error('Error in botReply:', error);
-        return {
-            success: false,
-            message: "An error occurred while posting the reply."
-        };
-    }
 }

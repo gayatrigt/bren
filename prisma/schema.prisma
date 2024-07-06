@@ -62,10 +62,10 @@ model Invite {
 }
 
 model BotReply {
-    castHash    String       @unique
-    parentHash  String       @unique
-    transaction Transaction? @relation(fields: [castHash], references: [castHash])
-    repliedAt   DateTime     @default(now())
+    botcastHash  String       @unique
+    userCastHash String       @unique
+    transaction  Transaction? @relation(fields: [userCastHash], references: [castHash])
+    repliedAt    DateTime     @default(now())
 }
 
 enum UserType {

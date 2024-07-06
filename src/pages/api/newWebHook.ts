@@ -69,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('Extracted Hash:', hash);
 
         // Make an API call to process the data
-        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/process-webhook`, {
+        fetch(`http://localhost:3000/api/process-webhook`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
