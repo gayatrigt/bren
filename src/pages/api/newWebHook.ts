@@ -69,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('Extracted Hash:', hash);
 
         // Make an API call to process the data
-        fetch(`https://bren.vercel.app/api/process-webhook`, {
+        fetch(`http://localhost:3000/api/process-webhook`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }).catch(error => console.error('Error calling process API:', error));
 
         // Respond to the webhook immediately
-        res.status(200).json({ message: 'Webhook received successfully' });
+        return res.status(200).json({ message: 'Webhook received successfully' });
 
         console.log('processWebhookData completed');
 
