@@ -32,9 +32,9 @@ model User {
 }
 
 model Transaction {
-    castHash       String     @id
+    castHash       String   @id
     fromAddress    String
-    fromUser       User       @relation("FromUser", fields: [fromAddress], references: [walletAddress])
+    fromUser       User     @relation("FromUser", fields: [fromAddress], references: [walletAddress])
     fromUsername   String
     fromFid        Int
     toAddress      String?
@@ -45,8 +45,7 @@ model Transaction {
     link           String
     parentCastHash String?
     amount         Float
-    createdAt      DateTime   @default(now())
-    BotReply       BotReply[]
+    createdAt      DateTime @default(now())
 }
 
 model Invite {
@@ -62,10 +61,9 @@ model Invite {
 }
 
 model BotReply {
-    botcastHash  String       @unique
-    userCastHash String       @unique
-    transaction  Transaction? @relation(fields: [userCastHash], references: [castHash])
-    repliedAt    DateTime     @default(now())
+    botcastHash  String   @unique
+    userCastHash String   @unique
+    repliedAt    DateTime @default(now())
 }
 
 enum UserType {

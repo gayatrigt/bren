@@ -260,7 +260,7 @@ async function getUserCurrentAllowance(primaryAddress: string): Promise<number> 
 }
 
 const getUserAllowance = async (wallet: string): Promise<number> => {
-    const allowance: number = await stack.getPoints(wallet, { event: "allowance" });
+    const allowance: number = await stack.getPoints(wallet);
     return allowance
     // return 10000
 }

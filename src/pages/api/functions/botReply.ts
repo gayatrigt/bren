@@ -36,8 +36,6 @@ export async function botReply(userHash: string, castText: string, tipStatus: st
             ],
         }, { api_key: process.env.NEYNAR_API_KEY });
 
-        console.log("bot response:", response)
-
         const castHash = response.data.cast.hash;
 
         // Update the database
@@ -45,7 +43,7 @@ export async function botReply(userHash: string, castText: string, tipStatus: st
             data: {
                 botcastHash: castHash,
                 userCastHash: userHash,
-            }
+            },
         });
 
         return {

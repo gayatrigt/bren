@@ -59,16 +59,35 @@ async function checkWhitelist(fid: number, walletAddress: string, isPowerBadge: 
 }
 
 async function checkUserType(walletAddress: string): Promise<string> {
-    const response = await fetch(
-        `https://api.dune.com/api/v1/query/3840675/results?limit=1000&wallet_address=${walletAddress}`,
-        {
-            headers: {
-                "X-Dune-API-Key": process.env.DUNE_API_KEY!,
-            },
+    try {
+        const response = await fetch(
+            `https://api.dune.com/api/v1/query/3840675/results?limit=1000&wallet_address=${walletAddress}`,
+            {
+                headers: {
+                    "X-Dune-API-Key": process.env.DUNE_API_KEY || "",
+                },
+            }
+        );
+
+        if (!response.ok) {
+            console.error(`Dune API responded with status: ${response.status}`);
+            return 'UNKNOWN';
         }
-    );
-    const data = await response.json();
-    return data.result.rows[0]?.type || 'UNKNOWN';
+
+        const data = await response.json();
+
+        console.log('Dune API response:', JSON.stringify(data, null, 2));
+
+        if (!data || !data.result || !Array.isArray(data.result.rows) || data.result.rows.length === 0) {
+            console.warn(`Unexpected or empty response from Dune API for wallet address: ${walletAddress}`);
+            return 'UNKNOWN';
+        }
+
+        return data.result.rows[0]?.type || 'UNKNOWN';
+    } catch (error) {
+        console.error('Error in checkUserType:', error);
+        return 'UNKNOWN';
+    }
 }
 
 async function checkIfFollowsBrenChannel(fid: number): Promise<'bren' | undefined> {
