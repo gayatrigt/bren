@@ -77,11 +77,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             body: JSON.stringify({ hash }),
         }).catch(error => console.error('Error calling process API:', error));
 
-        // Respond to the webhook immediately
-        return res.status(200).json({ message: 'Webhook received successfully' });
+        setTimeout(() => {
+            // Respond to the webhook immediately
+            return res.status(200).json({ message: 'Webhook received successfully' });
+        }, 200)
 
         console.log('processWebhookData completed');
-
     } catch (error) {
         console.error('Error processing webhook:', error);
         res.status(500).json({ message: 'Internal Server Error' });
