@@ -83,10 +83,10 @@ export async function processWebhookData(hash: string) {
 
         console.log('Hashtag Value:', hashtagValue);
 
-        if (!hashtagValue) {
-            console.error('Please provide a value');
-            throw new Error('Please provide a value');
-        }
+        // if (!hashtagValue) {
+        //     console.error('Please provide a value');
+        //     throw new Error('Please provide a value');
+        // }
 
         const fromFid = neynarCast.author.fid
         const fromUser = neynarCast.author
