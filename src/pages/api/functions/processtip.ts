@@ -47,6 +47,22 @@ export async function processTip(
             const toAddress = toDetails.verified_addresses.eth_addresses[0];
             const toUsername = toDetails.username;
 
+            if (!toAddress) {
+                const result = await botReplyFail(
+                    castHash,
+                    `Hey @${fromUsername}!\nYou cannot tip @${toUsername} as they don't have a wallet connected.`,
+                    "Tip Failed to be processed",
+                    currentAllowance
+                );
+
+                if (result.success) {
+                    console.log('Reply posted successfully:', result.castHash);
+                } else {
+                    console.error('Failed to post reply:', result.message);
+                }
+                return; // Exit the function early
+            }
+
             const data = {
                 amount: tipAmount,
                 fromFid,
@@ -54,7 +70,7 @@ export async function processTip(
                 fromUsername,
                 toUsername,
                 toFid,
-                toAddress: toAddress || null,
+                toAddress: toAddress,
                 text: message,
                 value: hashtagValue,
                 castHash,
