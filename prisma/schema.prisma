@@ -29,6 +29,7 @@ model User {
     sentTransactions Transaction[] @relation("FromUser")
     sentInvites      Invite[]      @relation("Invitor")
     receivedInvites  Invite[]      @relation("Invitee")
+    UserRanking      UserRanking?
 }
 
 model Transaction {
@@ -64,6 +65,16 @@ model BotReply {
     botcastHash  String   @unique
     userCastHash String   @unique
     repliedAt    DateTime @default(now())
+}
+
+model UserRanking {
+    id            Int      @id @default(autoincrement())
+    fid           Int      @unique @default(0)
+    walletAddress String   @unique
+    user          User?    @relation(fields: [walletAddress], references: [walletAddress])
+    totalPoints   BigInt
+    rank          Int
+    updatedAt     DateTime @updatedAt
 }
 
 enum UserType {

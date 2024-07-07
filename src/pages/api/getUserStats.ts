@@ -2,6 +2,26 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { db } from '~/server/db'
 import { stack } from '~/server/stack'
 
+function getStartOfWeek(): Date {
+    const now = new Date();
+    const day = now.getUTCDay();
+    const diff = now.getUTCDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), diff, 0, 0, 0, 0));
+}
+
+async function getUserRankAndPoints(fid: number) {
+    const ranking = await db.userRanking.findUnique({
+        where: { fid },
+        select: { rank: true, totalPoints: true, updatedAt: true }
+    });
+
+    return {
+        rank: ranking?.rank || 0,
+        pointsEarned: ranking?.totalPoints ? Number(ranking.totalPoints) : 0,
+        lastUpdated: ranking?.updatedAt || null
+    };
+}
+
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -18,8 +38,9 @@ export default async function handler(
 
     try {
         const numericFid = parseInt(fid, 10)
+        const startOfWeek = getStartOfWeek();
 
-        // 1, 2, 3. Get UserType, Username, and Pfp
+        // Get user data
         const user = await db.user.findUnique({
             where: { fid: numericFid },
             select: {
@@ -30,63 +51,69 @@ export default async function handler(
             },
         })
 
-        if (!user) {
+        // Get rank, points, and last updated time from the ranking table
+        const { rank, pointsEarned, lastUpdated } = await getUserRankAndPoints(numericFid);
+
+        if (!user && rank === 0) {
             return res.status(404).json({ error: 'User not found' })
         }
 
-        // 4. Calculate points earned
-        const pointsEarned = await db.transaction.aggregate({
-            where: { toFid: numericFid },
-            _sum: { amount: true },
-        })
+        let response: any = {
+            rank,
+            pointsEarned,
+            lastRankUpdate: lastUpdated,
+            startOfWeek
+        };
 
-        // 5 & 6. Weekly allowance left and total allowance
-        const now = new Date()
-        const weekAgo = new Date(now.setDate(now.getDate() - 7))
-        const totalAllowance = await getUserAllowance(user.walletAddress)
-        const weeklyTransactions = await db.transaction.aggregate({
-            where: {
-                fromAddress: user.walletAddress,
-                createdAt: { gte: weekAgo },
-            },
-            _sum: { amount: true },
-        })
-        const weeklyAllowanceLeft = totalAllowance - (weeklyTransactions._sum.amount || 0)
-
-        // 7. Get last 3 invited users' pfps
-        const invitedUsers = await db.invite.findMany({
-            where: {
-                invitorFid: numericFid,
-                createdAt: { gte: weekAgo },
-            },
-            include: {
-                invitee: {
-                    select: { pfp: true },
+        if (user) {
+            // 5 & 6. Weekly allowance left and total allowance
+            const totalAllowance = await getUserAllowance(user.walletAddress)
+            const weeklyTransactions = await db.transaction.aggregate({
+                where: {
+                    fromAddress: user.walletAddress,
+                    createdAt: { gte: startOfWeek },
                 },
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 3,
-        })
+                _sum: { amount: true },
+            })
+            const weeklyAllowanceLeft = totalAllowance - (weeklyTransactions._sum.amount ? Number(weeklyTransactions._sum.amount) : 0)
 
-        // 8. Invites left
-        const invitesUsed = await db.invite.count({
-            where: {
-                invitorFid: numericFid,
-                createdAt: { gte: weekAgo },
-            },
-        })
-        const invitesLeft = 3 - invitesUsed
+            // 7. Get last 3 invited users' pfps
+            const invitedUsers = await db.invite.findMany({
+                where: {
+                    invitorFid: numericFid,
+                    createdAt: { gte: startOfWeek },
+                },
+                include: {
+                    invitee: {
+                        select: { pfp: true },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 3,
+            })
 
-        res.status(200).json({
-            userType: user.type,
-            username: user.username,
-            pfp: user.pfp,
-            pointsEarned: pointsEarned._sum.amount || 0,
-            weeklyAllowanceLeft,
-            totalAllowance,
-            recentInviteesPfps: invitedUsers.map(invite => invite.invitee?.pfp),
-            invitesLeft,
-        })
+            // 8. Invites left
+            const invitesUsed = await db.invite.count({
+                where: {
+                    invitorFid: numericFid,
+                    createdAt: { gte: startOfWeek },
+                },
+            })
+            const invitesLeft = 3 - invitesUsed
+
+            response = {
+                ...response,
+                userType: user.type,
+                username: user.username,
+                pfp: user.pfp,
+                weeklyAllowanceLeft,
+                totalAllowance,
+                recentInviteesPfps: invitedUsers.map(invite => invite.invitee?.pfp),
+                invitesLeft,
+            }
+        }
+
+        res.status(200).json(response)
 
     } catch (error) {
         console.error('Error fetching user data:', error)
