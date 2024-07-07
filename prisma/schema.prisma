@@ -20,11 +20,11 @@ datasource db {
 model User {
     walletAddress    String        @id
     fid              Int           @unique
-    display_name     String
-    username         String
-    pfp              String
-    isAllowanceGiven Boolean
-    allowanceGivenAt DateTime      @default(now())
+    display_name     String?
+    username         String?
+    pfp              String?
+    isAllowanceGiven Boolean?
+    allowanceGivenAt DateTime?     @default(now())
     type             UserType?
     sentTransactions Transaction[] @relation("FromUser")
     sentInvites      Invite[]      @relation("Invitor")
@@ -69,9 +69,9 @@ model BotReply {
 
 model UserRanking {
     id            Int      @id @default(autoincrement())
-    fid           Int      @unique @default(0)
-    walletAddress String   @unique
-    user          User?    @relation(fields: [walletAddress], references: [walletAddress])
+    fid           Int      @unique
+    walletAddress String?  @unique
+    user          User     @relation(fields: [fid], references: [fid])
     totalPoints   BigInt
     rank          Int
     updatedAt     DateTime @updatedAt

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { db } from "~/server/db"
 
@@ -28,39 +29,65 @@ export default async function handler(
 async function updateRankings() {
     await db.$transaction(async (tx) => {
         // Clear existing rankings
-        await tx.userRanking.deleteMany({})
+        await tx.userRanking.deleteMany({});
 
-        // Calculate new rankings
-        const rankings = await tx.$queryRaw<RankingResult[]>`
+        // Calculate new rankings and fetch wallet addresses
+        const rankings = await tx.$queryRaw<(RankingResult & { walletAddress: string | null })[]>`
     WITH user_points AS (
       SELECT 
-        COALESCE("User"."fid", 0) as "fid",
-        "Transaction"."toAddress" as "walletAddress",
-        COALESCE(SUM("Transaction"."amount"), 0) as "totalPoints"
+        "Transaction"."toFid" as "fid",
+        COALESCE(SUM("Transaction"."amount"), 0) as "totalPoints",
+        MAX("Transaction"."toAddress") as "walletAddress"
       FROM "Transaction"
-      LEFT JOIN "User" ON "User"."walletAddress" = "Transaction"."toAddress"
-      GROUP BY COALESCE("User"."fid", 0), "Transaction"."toAddress"
+      WHERE "Transaction"."toFid" IS NOT NULL
+      GROUP BY "Transaction"."toFid"
     ),
     ranked_users AS (
       SELECT 
         "fid",
-        "walletAddress",
         "totalPoints",
+        "walletAddress",
         RANK() OVER (ORDER BY "totalPoints" DESC) as "rank"
       FROM user_points
     )
     SELECT * FROM ranked_users
-  `
+  `;
 
-        await tx.userRanking.createMany({
-            data: rankings.map((r) => ({
-                fid: r.fid,
-                walletAddress: r.walletAddress,
-                totalPoints: r.totalPoints,
-                rank: Number(r.rank) // Convert BigInt to Number
-            })),
-        })
-    })
+        // Get existing user FIDs
+        const existingUsers = await tx.user.findMany({
+            select: { fid: true }
+        });
+        const existingUserFids = new Set(existingUsers.map(u => u.fid));
 
-    console.log('Rankings updated successfully')
+        // Create new rankings
+        for (const r of rankings) {
+            // If user doesn't exist, create it first
+            if (!existingUserFids.has(r.fid)) {
+                await tx.user.create({
+                    data: {
+                        fid: r.fid,
+                        walletAddress: r.walletAddress,
+                    }
+                });
+            }
+
+            // Now create or update the UserRanking
+            await tx.userRanking.upsert({
+                where: { fid: r.fid },
+                update: {
+                    totalPoints: r.totalPoints,
+                    rank: Number(r.rank),
+                    walletAddress: r.walletAddress
+                },
+                create: {
+                    fid: r.fid,
+                    totalPoints: r.totalPoints,
+                    rank: Number(r.rank),
+                    walletAddress: r.walletAddress
+                }
+            });
+        }
+    });
+
+    console.log('Rankings updated successfully');
 }
