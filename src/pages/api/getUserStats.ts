@@ -5,7 +5,7 @@ import { stack } from '~/server/stack'
 import { checkWhitelist } from './functions/checkWhiteList';
 import { UserType } from '@prisma/client';
 
-function getStartOfWeek(): Date {
+export function getStartOfWeek(): Date {
     const now = new Date();
     const day = now.getUTCDay();
     const diff = now.getUTCDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday

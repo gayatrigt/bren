@@ -7,7 +7,6 @@ import { processTip } from "./functions/processtip";
 import { checkWhitelist } from "./functions/checkWhiteList";
 import { botReply } from "./functions/botReply";
 import { setUserAllowance } from "./functions/setAllowance";
-import { getStartOfWeek } from "./getUserStats";
 
 // get cast details from Hash
 // Get the user ans check if exitsts in db
@@ -232,14 +231,14 @@ async function getUserCurrentAllowance(primaryAddress: string): Promise<number> 
     // Get the user's base allowance
     const allowance = await getUserAllowance(primaryAddress);
 
-    // Get the start of the current week
-    const startOfWeek = getStartOfWeek();
+    const now = new Date();
+    const from = new Date(now.setDate(now.getDate() - 7)).setHours(0, 0, 0, 0);
 
-    // Get the sum of 'value' for transactions from the start of this week for the primary address
+    // Get the sum of 'value' for transactions from this week for the primary address
     const result = await db.transaction.aggregate({
         where: {
             createdAt: {
-                gte: startOfWeek
+                gte: new Date(from)
             },
             fromAddress: primaryAddress
         },
