@@ -1,6 +1,8 @@
 import { db } from "~/server/db";
 import { getUserById } from "~/server/neynar";
-import { botReply } from "./botReply";
+import { botReply, botReplyFail, botReplySuccess } from "./botReply";
+
+const validHashtags = ["integrity", "teamwork", "tenacity", "creativity", "optimism"];
 
 export async function processTip(
     tipAmount: number,
@@ -15,6 +17,26 @@ export async function processTip(
     neynarCast: any
 ) {
     try {
+        // Convert hashtagValue to lowercase for case-insensitive comparison
+        const lowercaseHashtag = hashtagValue.toLowerCase();
+
+        // Check if the hashtag is valid
+        if (!validHashtags.includes(lowercaseHashtag)) {
+            const result = await botReplyFail(
+                castHash,
+                `Hey ${fromUsername}!\nYou cannot tip without a valid value. Please use one of the following hashtags: ${validHashtags.map(tag => '#' + tag.charAt(0).toUpperCase() + tag.slice(1)).join(", ")}.`,
+                "You cannot tip Bren without a valid value",
+                currentAllowance
+            );
+
+            if (result.success) {
+                console.log('Reply posted successfully:', result.castHash);
+            } else {
+                console.error('Failed to post reply:', result.message);
+            }
+            return; // Exit the function early
+        }
+
         if (currentAllowance >= tipAmount) {
             const toDetails = await getUserById(toFid, fromFid);
 
@@ -53,12 +75,12 @@ export async function processTip(
 
             if (createdTransaction) {
                 const allowanceLeft = currentAllowance - tipAmount;
-                const result = await botReply(
+                const result = await botReplySuccess(
                     castHash,
-                    `Hey ${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to ${toUsername}.\nAllowance left : ${allowanceLeft < 0 ? 0 : allowanceLeft} $bren`,
-                    "Tip Successful",
-                    "",
-                    `You have successfully tipped ${tipAmount} $bren`
+                    `Hey ${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to ${toUsername} for #${hashtagValue}.`,
+                    toFid,
+                    tipAmount,
+                    allowanceLeft
                 );
 
                 if (result.success) {
@@ -70,12 +92,11 @@ export async function processTip(
                 console.error('Transaction was not created in the database, skipping bot reply');
             }
         } else {
-            const result = await botReply(
+            const result = await botReplyFail(
                 castHash,
                 `Hey ${fromUsername}!\nYou cannot tip ${tipAmount} $bren.\nAllowance left : ${currentAllowance} $bren`,
-                "Tip Failed",
-                "",
-                `Your tip failed due to insufficient allowance`
+                `Your tip failed due to insufficient allowance`,
+                currentAllowance
             );
 
             if (result.success) {
@@ -89,9 +110,7 @@ export async function processTip(
         const errorResult = await botReply(
             castHash,
             `Hey ${fromUsername}!\nSorry, there was an error processing your tip. Please try again later.`,
-            "Tip Failed",
-            "",
-            "Error processing tip"
+            "Tip Failed to Process",
         );
         if (errorResult.success) {
             console.log('Error reply posted successfully:', errorResult.castHash);

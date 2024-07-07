@@ -71,7 +71,7 @@ export async function processWebhookData(hash: string) {
         if (!tipAmount) {
             console.error('The tip amount is invalid');
 
-            throw error('The tip amount is invalid');
+            throw new Error('The tip amount is invalid');
         }
 
         // Extract value preceded by '#'
@@ -81,12 +81,11 @@ export async function processWebhookData(hash: string) {
             hashtagValue = hashtagMatch[1];
         }
 
-        console.log('Tip Amount:', tipAmount);
         console.log('Hashtag Value:', hashtagValue);
 
         if (!hashtagValue) {
             console.error('Please provide a value');
-            throw error('Please provide a value');
+            throw new Error('Please provide a value');
         }
 
         const fromFid = neynarCast.author.fid
@@ -148,8 +147,6 @@ export async function processWebhookData(hash: string) {
                 const result = await botReply(
                     castHash,
                     `Hey ${fromUsername}! You are not eligible to tip $bren`,
-                    "Tip Failed",
-                    "",
                     `Your tip failed as you are not eligible`
                 );
 
