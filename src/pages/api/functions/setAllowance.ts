@@ -36,7 +36,7 @@ export async function setUserAllowance(fid: number, walletAddress: string, userT
                 }
                 break;
             case UserType.FOLLOWER:
-                allowancePoints = 0; // No allowance for followers
+                allowancePoints = 20;
                 break;
             default:
                 throw new Error('Invalid user type');

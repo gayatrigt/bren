@@ -1,8 +1,8 @@
 const sdk = require('api')('@neynar/v2.0#281yklumre2o7');
 
-export const getUserById = async (fid: number, viewer_fid: number): Promise<User | null | undefined> => {
+export const getUserById = async (fid: number): Promise<User | null | undefined> => {
     try {
-        const response: GetUserByIdResponse = await sdk.userBulk({ viewer_fid, fids: [fid], api_key: process.env.NEYNAR_API_KEY })
+        const response: GetUserByIdResponse = await sdk.userBulk({ fids: [fid], api_key: process.env.NEYNAR_API_KEY })
         return response.data.users[0]
     } catch (error) {
         console.error(error)

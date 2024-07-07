@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { db } from "~/server/db"
+import { User, getUserById } from "~/server/neynar";
 
 interface RankingResult {
     fid: number;
@@ -63,10 +64,17 @@ async function updateRankings() {
         for (const r of rankings) {
             // If user doesn't exist, create it first
             if (!existingUserFids.has(r.fid)) {
+
+                const details = await getUserById(r.fid)
+
                 await tx.user.create({
                     data: {
                         fid: r.fid,
                         walletAddress: r.walletAddress,
+                        display_name: details?.display_name,
+                        username: details?.username,
+                        pfp: details?.pfp_url,
+                        isAllowanceGiven: false
                     }
                 });
             }

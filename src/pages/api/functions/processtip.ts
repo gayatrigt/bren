@@ -38,7 +38,7 @@ export async function processTip(
         }
 
         if (currentAllowance >= tipAmount) {
-            const toDetails = await getUserById(toFid, fromFid);
+            const toDetails = await getUserById(toFid);
 
             if (!toDetails) {
                 throw new Error('toUser details not found');

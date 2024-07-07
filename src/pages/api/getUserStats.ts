@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { db } from '~/server/db'
+import { User, getUserById } from '~/server/neynar';
 import { stack } from '~/server/stack'
+import { checkWhitelist } from './functions/checkWhiteList';
+import { UserType } from '@prisma/client';
 
 function getStartOfWeek(): Date {
     const now = new Date();
@@ -54,16 +57,53 @@ export default async function handler(
         // Get rank, points, and last updated time from the ranking table
         const { rank, pointsEarned, lastUpdated } = await getUserRankAndPoints(numericFid);
 
-        if (!user && rank === 0) {
-            return res.status(404).json({ error: 'User not found' })
-        }
-
         let response: any = {
             rank,
             pointsEarned,
             lastRankUpdate: lastUpdated,
             startOfWeek
         };
+
+        if (!user && rank === 0) {
+
+            const details = await getUserById(numericFid)
+
+            if (details && details.verified_addresses.eth_addresses[0]) {
+                const userEligibility: UserType | 'NOT_WHITELISTED' = await checkWhitelist(numericFid, details.verified_addresses.eth_addresses[0], details.power_badge)
+
+                console.log(userEligibility)
+
+                if (userEligibility !== 'NOT_WHITELISTED') {
+                    let totalAllowance: number;
+
+                    if (userEligibility == "ALLIES") {
+                        totalAllowance = 500
+                    } else if (userEligibility == "SPLITTERS") {
+                        totalAllowance = 100
+                    } else if (userEligibility == "POWER_BADGE") {
+                        totalAllowance = 300
+                    } else if (userEligibility == "FOLLOWER") {
+                        totalAllowance = 25
+                    } else {
+                        totalAllowance = 0
+                    }
+
+                    response = {
+                        ...response,
+                        userType: userEligibility,
+                        username: details.username,
+                        pfp: details.pfp_url,
+                        weeklyAllowanceLeft: totalAllowance,
+                        totalAllowance,
+                        recentInviteesPfps: [],
+                        invitesLeft: 3,
+                    }
+                    return res.status(200).json(response)
+
+                }
+            }
+            return res.status(200).json({ error: 'User not found or not whitelisted' })
+        }
 
         if (user) {
             // 5 & 6. Weekly allowance left and total allowance
