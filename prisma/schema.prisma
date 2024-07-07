@@ -19,7 +19,7 @@ datasource db {
 
 model User {
     walletAddress    String        @id
-    fid              Int
+    fid              Int           @unique
     display_name     String
     username         String
     pfp              String
