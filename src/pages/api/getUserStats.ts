@@ -91,8 +91,6 @@ export default async function handler(
                     response = {
                         ...response,
                         userType: userEligibility,
-                        username: details.username,
-                        pfp: details.pfp_url,
                         weeklyAllowanceLeft: totalAllowance,
                         totalAllowance,
                         recentInviteesPfps: [],
@@ -144,8 +142,6 @@ export default async function handler(
             response = {
                 ...response,
                 userType: user.type,
-                username: user.username,
-                pfp: user.pfp,
                 weeklyAllowanceLeft,
                 totalAllowance,
                 recentInviteesPfps: invitedUsers.map(invite => invite.invitee?.pfp),
