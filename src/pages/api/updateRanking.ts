@@ -27,7 +27,7 @@ export default async function handler(
     }
 }
 
-async function updateRankings() {
+export async function updateRankings() {
     await db.$transaction(async (tx) => {
         // Clear existing rankings
         await tx.userRanking.deleteMany({});

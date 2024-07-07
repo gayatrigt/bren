@@ -3,5 +3,11 @@
         "pages/api/**/*.ts": {
             "maxDuration": 60
         }
-    }
+    },
+    "crons": [
+        {
+            "path": "/api/cron/update-rankings?token=cookie",
+            "schedule": "*/30 * * * *"
+        }
+    ]
 }
