@@ -24,7 +24,7 @@ export async function processTip(
         if (!validHashtags.includes(lowercaseHashtag)) {
             const result = await botReplyFail(
                 castHash,
-                `Hey ${fromUsername}!\nYou cannot tip without a valid value. Please use one of the following hashtags: ${validHashtags.map(tag => '#' + tag.charAt(0).toUpperCase() + tag.slice(1)).join(", ")}.`,
+                `Hey @${fromUsername}!\nYou cannot tip without a valid value. Please use one of the following hashtags: ${validHashtags.map(tag => '#' + tag.charAt(0).toUpperCase() + tag.slice(1)).join(", ")}.`,
                 "You cannot tip Bren without a valid value",
                 currentAllowance
             );
@@ -93,7 +93,7 @@ export async function processTip(
                 const allowanceLeft = currentAllowance - tipAmount;
                 const result = await botReplySuccess(
                     castHash,
-                    `Hey ${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to ${toUsername} for #${hashtagValue}.`,
+                    `Hey @${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to @${toUsername} for #${hashtagValue}.`,
                     toFid,
                     tipAmount,
                     allowanceLeft
@@ -110,7 +110,7 @@ export async function processTip(
         } else {
             const result = await botReplyFail(
                 castHash,
-                `Hey ${fromUsername}!\nYou cannot tip ${tipAmount} $bren.\nAllowance left : ${currentAllowance} $bren`,
+                `Hey @${fromUsername}!\nYou cannot tip ${tipAmount} $bren.\nAllowance left : ${currentAllowance} $bren`,
                 `Your tip failed due to insufficient allowance`,
                 currentAllowance
             );
@@ -125,7 +125,7 @@ export async function processTip(
         console.error('Error in tip processing:', error);
         const errorResult = await botReply(
             castHash,
-            `Hey ${fromUsername}!\nSorry, there was an error processing your tip. Please try again later.`,
+            `Hey @${fromUsername}!\nSorry, there was an error processing your tip. Please try again later.`,
             "Tip Failed to Process",
         );
         if (errorResult.success) {

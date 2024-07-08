@@ -6,7 +6,7 @@
     },
     "crons": [
         {
-            "path": "/api/cron/update-rankings?token=cookie",
+            "path": "/api/cron/updateRankings",
             "schedule": "*/30 * * * *"
         }
     ]

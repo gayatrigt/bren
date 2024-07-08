@@ -146,6 +146,10 @@ export default async function handler(
                 totalAllowance,
                 recentInviteesPfps: invitedUsers.map(invite => invite.invitee?.pfp),
                 invitesLeft,
+                rank,
+                pointsEarned,
+                lastRankUpdate: lastUpdated,
+                startOfWeek
             }
         }
 

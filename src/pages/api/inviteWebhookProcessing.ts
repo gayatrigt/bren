@@ -8,13 +8,6 @@ import { checkWhitelist } from "./functions/checkWhiteList";
 import { botReply } from "./functions/botReply";
 import { setUserAllowance } from "./functions/setAllowance";
 
-// get cast details from Hash
-// Get the user ans check if exitsts in db
-// if user exists then check the cast message for the tip amount and value and the sender details
-// check the user allowance and respond success or you dont have allowance
-// if does not exists, check if eligible and then create user and give allowance
-// the check message and response success tip
-// if not eligible respond you are not eligoble to tip
 
 export async function processWebhookData(hash: string) {
     console.log('processWebhookData started');
@@ -54,61 +47,21 @@ export async function processWebhookData(hash: string) {
             throw new Error("Cast text is invalid")
         }
 
-        // grab the amount fo the tip from the message, format: $250 bren using regex, amount should have $250 followed by bren
-        let tipAmount = 0
-        let hashtagValue = '';
+        const isInviteMessage = /\binvite\b/i.test(message);
 
-        const amountFromText = message.match(/\$?\s*(\d+)\s*\$?\s*bren\b/i);
-
-        if (amountFromText?.[1]) {
-            tipAmount = parseInt(amountFromText?.[1]
-                .replace(/\$/, '')
-            );
+        if (!isInviteMessage) {
+            // Handle invite logic here
+            console.log("This is not an invite message");
+            // You might want to return early or set a flag to skip tip processing
+            return; // Uncomment this if you want to exit the function for invite messages
         }
-
-        console.log('Tip Amount:', tipAmount);
-
-        if (!tipAmount) {
-            console.error('The tip amount is invalid');
-
-            throw new Error('The tip amount is invalid');
-        }
-
-        // Extract value preceded by '#'
-        const hashtagMatch = message.match(/#(\w+)/);
-
-        if (hashtagMatch?.[1]) {
-            hashtagValue = hashtagMatch[1];
-        }
-
-        console.log('Hashtag Value:', hashtagValue);
-
-        // if (!hashtagValue) {
-        //     console.error('Please provide a value');
-        //     throw new Error('Please provide a value');
-        // }
 
         const fromFid = neynarCast.author.fid
-        const fromUser = neynarCast.author
         const fromAddress = neynarCast.author.verified_addresses.eth_addresses[0]
         const fromUsername = neynarCast.author.username
 
         if (!fromAddress) {
             throw new Error('No verified Ethereum address found for user');
-        }
-
-        let toFid = 0
-
-        if (neynarCast.parent_author) {
-            toFid = neynarCast.parent_author.fid
-        }
-
-        if (neynarCast.mentioned_profiles[0]) {
-            toFid = neynarCast.mentioned_profiles[0].fid
-        }
-
-        if (toFid == 0) {
-            throw new Error('No sender details found')
         }
 
         const userExists = await checkUserExists(fromFid, fromAddress)
@@ -117,21 +70,6 @@ export async function processWebhookData(hash: string) {
             console.log('User already exists in the database');
             // Perform actions for existing user
 
-            const currentAllowance = await getUserCurrentAllowance(fromAddress);
-            const allowanceLeft = currentAllowance - tipAmount
-
-            await processTip(
-                tipAmount,
-                currentAllowance,
-                fromFid,
-                fromAddress,
-                fromUsername,
-                toFid,
-                message,
-                hashtagValue,
-                castHash,
-                neynarCast
-            );
 
         } else {
             console.log('New user detected');
@@ -146,8 +84,8 @@ export async function processWebhookData(hash: string) {
 
                 const result = await botReply(
                     castHash,
-                    `Hey ${fromUsername}! You are not eligible to tip $bren`,
-                    `Your tip failed as you are not eligible`
+                    `Hey ${fromUsername}! You are not eligible to invite a Bren`,
+                    `You are not eligible to invite a Bren`
                 );
 
                 if (result.success) {
@@ -156,7 +94,22 @@ export async function processWebhookData(hash: string) {
                     console.error('Failed to post reply:', result.message);
                 }
 
-            } else {
+            } if (result === 'FOLLOWER' || result === 'INVITED' || result === 'POWER_BADGE') {
+                console.log('User cannot invite');
+
+                const result = await botReply(
+                    castHash,
+                    `Hey ${fromUsername}! You are not eligible to invite a Bren. Only Build committers can invite.`,
+                    `You are not eligible to invite a Bren`
+                );
+
+                if (result.success) {
+                    console.log('Reply posted successfully:', result.castHash);
+                } else {
+                    console.error('Failed to post reply:', result.message);
+                }
+            }
+            else if (result === 'ALLIES' || result === 'SPLITTERS') {
                 console.log(`User is whitelisted as ${result}`);
 
                 try {
@@ -184,21 +137,6 @@ export async function processWebhookData(hash: string) {
                 } catch (error) {
                     console.error('Failed to set allowance:', error);
                 }
-
-                const currentAllowance = await getUserCurrentAllowance(fromAddress);
-
-                await processTip(
-                    tipAmount,
-                    currentAllowance,
-                    fromFid,
-                    fromAddress,
-                    fromUsername,
-                    toFid,
-                    message,
-                    hashtagValue,
-                    castHash,
-                    neynarCast
-                );
 
             }
         }
