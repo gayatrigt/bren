@@ -1,4 +1,5 @@
 import { UserType } from "@prisma/client";
+import { NeynarChannel } from "~/contracts/NeynarChannel";
 import { db } from "~/server/db";
 
 interface NeynarWebhook {
@@ -92,40 +93,41 @@ async function checkUserType(walletAddress: string): Promise<string> {
 
 async function checkIfFollowsBrenChannel(fid: number): Promise<'bren' | undefined> {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!baseUrl) {
-            throw new Error('NEXT_PUBLIC_BASE_URL is not defined');
-        }
-
-        const url = `${baseUrl}/api/channelFollowCheck?fid=${fid}`;
-        const response = await fetch(url, {
+        const url = `https://api.neynar.com/v2/farcaster/channel?id=bren&type=id&viewer_fid=${fid}`;
+        const options = {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+                accept: 'application/json',
+                api_key: process.env.NEYNAR_API_KEY || ''
+            }
+        };
 
+        const response = await fetch(url, options);
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. ${errorText}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data: ChannelFollowCheckResponse = await response.json();
+        const NeynarChannel: NeynarChannel = await response.json();
 
-        // Check if the data structure is as expected
-        if (!data?.data?.FarcasterChannelParticipants?.FarcasterChannelParticipant) {
-            console.warn('Unexpected data structure:', data);
-            return undefined;
+        const channel = NeynarChannel.channel
+
+        if (channel) {
+            const isFollowing = channel.viewer_context.following
+
+            if (isFollowing) {
+                return 'bren';
+            } else {
+                return undefined;
+            }
         }
 
-        const participant = data.data.FarcasterChannelParticipants.FarcasterChannelParticipant[0];
-        return participant?.channelName === 'bren' ? 'bren' : undefined;
+        return undefined;
 
     } catch (error) {
-        console.error('Error in checkIfFollowsBrenChannel function:', error);
+        console.error('Error in isFollowing function:', error);
         // Depending on your error handling strategy, you might want to rethrow the error
-        // or return undefined as you're currently doing
-        return undefined;
+        // or return a default value
+        throw error;
     }
 }
 

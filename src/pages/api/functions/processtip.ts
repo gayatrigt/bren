@@ -1,7 +1,7 @@
 import { db } from "~/server/db";
 import { getUserById } from "~/server/neynar";
 import { botReply, botReplyFail, botReplySuccess } from "./botReply";
-import accountFollowCheck, { checkAccountFollow } from "../accountFollowCheck";
+import { NeynarUser } from "~/contracts/NeynarUser";
 
 const validHashtags = ["integrity", "teamwork", "tenacity", "creativity", "optimism"];
 
@@ -190,34 +190,30 @@ export async function processTip(
 // Function to check if fromFid is following toFid using accountFollowCheck
 async function isFollowing(fromFid: number): Promise<boolean> {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!baseUrl) {
-            throw new Error('NEXT_PUBLIC_BASE_URL is not defined');
-        }
-
-        const url = `https://bren.vercel.app/api/accountFollowCheck?fid=${fromFid}`;
-        const response = await fetch(url, {
-            method: 'GET', // Explicitly stating it's a GET request
+        const url = `https://api.neynar.com/v2/farcaster/user/bulk?fids=670648&viewer_fid=${fromFid}`;
+        const options = {
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+                accept: 'application/json',
+                api_key: process.env.NEYNAR_API_KEY || ''
+            }
+        };
 
+        const response = await fetch(url, options);
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. ${errorText}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data: checkAccountFollow = await response.json();
+        const neynarUser: NeynarUser = await response.json();
 
-        // Check if the data structure is as expected
-        if (!data?.data?.SocialFollowings?.Following) {
-            console.warn('Unexpected data structure:', data);
-            return false;
+        const user = neynarUser.users[0]
+
+        if (user) {
+            const isFollowing = user.viewer_context.following;
+            return isFollowing;
         }
 
-        const following = data.data.SocialFollowings.Following[0];
-        return following?.followingProfileId === '670648';
+        return false;
     } catch (error) {
         console.error('Error in isFollowing function:', error);
         // Depending on your error handling strategy, you might want to rethrow the error
