@@ -10,7 +10,7 @@ import { setUserAllowance } from "./functions/setAllowance";
 import { processInvite } from "./functions/processInvite";
 
 
-export async function processWebhookData(hash: string) {
+export async function processinviteWebhookData(hash: string) {
     console.log('processWebhookData started');
 
     try {

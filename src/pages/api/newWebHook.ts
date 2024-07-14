@@ -46,7 +46,7 @@ interface WebhookResponse {
     };
 }
 
-const INVITE_WEBHOOK_URL = process.env.INVITE_WEBHOOK_URL || 'https://bren.vercel.app/api/inviteWebhookProcessing';
+const INVITE_WEBHOOK_URL = process.env.INVITE_WEBHOOK_URL || 'https://bren.vercel.app/api/inviteWebHook';
 const TIP_WEBHOOK_URL = process.env.TIP_WEBHOOK_URL || 'https://bren.vercel.app/api/process-webhook';
 
 async function callWebhook(url: string, hash: string) {
