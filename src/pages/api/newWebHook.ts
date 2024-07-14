@@ -1,71 +1,83 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { processWebhookData } from "./webHookProcessing";
+import { z } from "zod";
 
-interface WebhookResponse {
-    created_at: number;
-    type: string;
-    data: {
-        object: 'cast';
-        hash: string;
-        thread_hash: string;
-        parent_hash: string | null;
-        parent_url: string | null;
-        root_parent_url: string | null;
-        parent_author: {
-            fid: number | null;
-        };
-        author: {
-            object: 'user';
-            fid: number;
-            custody_address: string;
-            username: string;
-            display_name: string;
-            pfp_url: string;
-            profile: Record<string, unknown>;
-            follower_count: number;
-            following_count: number;
-            verifications: unknown[];
-            verified_addresses: Record<string, unknown>;
-            active_status: string;
-            power_badge: boolean;
-        };
-        text: string;
-        timestamp: string;
-        embeds: unknown[];
-        reactions: {
-            likes_count: number;
-            recasts_count: number;
-            likes: unknown[];
-            recasts: unknown[];
-        };
-        replies: {
-            count: number;
-        };
-        channel: unknown | null;
-        mentioned_profiles: unknown[];
-    };
+const WebhookSchema = z.object({
+    created_at: z.number(),
+    type: z.string(),
+    data: z.object({
+        object: z.literal('cast'),
+        hash: z.string(),
+        thread_hash: z.string(),
+        parent_hash: z.string().nullable(),
+        parent_url: z.string().nullable(),
+        root_parent_url: z.string().nullable(),
+        parent_author: z.object({
+            fid: z.number().nullable(),
+        }),
+        author: z.object({
+            object: z.literal('user'),
+            fid: z.number(),
+            custody_address: z.string(),
+            username: z.string(),
+            display_name: z.string(),
+            pfp_url: z.string(),
+            profile: z.record(z.unknown()),
+            follower_count: z.number(),
+            following_count: z.number(),
+            verifications: z.array(z.unknown()),
+            verified_addresses: z.record(z.unknown()),
+            active_status: z.string(),
+            power_badge: z.boolean(),
+        }),
+        text: z.string(),
+        timestamp: z.string(),
+        embeds: z.array(z.unknown()),
+        reactions: z.object({
+            likes_count: z.number(),
+            recasts_count: z.number(),
+            likes: z.array(z.unknown()),
+            recasts: z.array(z.unknown()),
+        }),
+        replies: z.object({
+            count: z.number(),
+        }),
+        channel: z.unknown().nullable(),
+        mentioned_profiles: z.array(z.unknown()),
+    }),
+});
+
+// Define the type based on the schema
+type WebhookData = z.infer<typeof WebhookSchema>;
+
+const INVITE_WEBHOOK_URL = process.env.INVITE_WEBHOOK_URL || 'https://bren.vercel.app/api/inviteWebhookProcessing';
+const TIP_WEBHOOK_URL = process.env.TIP_WEBHOOK_URL || 'https://bren.vercel.app/api/process-webhook';
+
+async function callWebhook(url: string, hash: string) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hash }),
+        });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error(`Error calling ${url}:`, error);
+    }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log('Webhook received');
 
     if (req.method !== 'POST') {
-        console.error('Method Not Allowed');
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
     try {
-        console.log('Request body:', JSON.stringify(req.body, null, 2));
+        const webhookData = WebhookSchema.parse(req.body);
 
-        const webhookData = req.body as WebhookResponse;
-
-        if (!webhookData || !webhookData.data) {
-            console.error('Invalid webhook data structure');
-            return res.status(400).json({ message: 'Invalid webhook data structure' });
-        }
-
-        const hash = webhookData.data.hash;
-        const text = webhookData.data.text;
+        const { hash, text } = webhookData.data;
 
         console.log('Extracted Hash:', hash);
         console.log('Extracted Text:', text);
@@ -73,47 +85,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const isInvite = /\binvite\b/i.test(text);
         const isTip = /\$bren/i.test(text);
 
-        const amountFromText = text.match(/\$?\s*(\d+)\s*\$?\s*bren\b/i);
-
-        // Log the results
-        console.log('Is Invite:', isInvite);
-        console.log('Is Tip:', isTip);
-
-        // If you need to use these booleans later in your code
-        if (isInvite) {
-            fetch(`https://bren.vercel.app/api/inviteWebhookProcessing`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ hash }),
-            }).catch(error => console.error('Error calling process API:', error));
-
-            console.log('This is an invite message');
-        } else if (isTip) {
-            fetch(`https://bren.vercel.app/api/process-webhook`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ hash }),
-            }).catch(error => console.error('Error calling process API:', error));
-
-            console.log('This is a tip message');
-        } else {
+        if (!isInvite && !isTip) {
             console.log('This message is neither an invite nor a tip');
+            return res.status(200).json({ message: 'Webhook received, but no action taken' });
         }
 
-        setTimeout(() => {
-            // Respond to the webhook immediately
-            return res.status(200).json({ message: 'Webhook received successfully' });
-        }, 200)
+        const webhookUrl = isInvite ? INVITE_WEBHOOK_URL : TIP_WEBHOOK_URL;
+        await callWebhook(webhookUrl, hash);
 
-        console.log('processWebhookData completed');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        return res.status(200).json({ message: 'Webhook received and processed successfully' });
+
     } catch (error) {
         console.error('Error processing webhook:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
-
-    console.log('Webhook processing completed');
 }

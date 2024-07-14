@@ -9,14 +9,6 @@ import { botReply } from "./functions/botReply";
 import { setUserAllowance } from "./functions/setAllowance";
 import { getStartOfWeek } from "./getUserStats";
 
-// get cast details from Hash
-// Get the user ans check if exitsts in db
-// if user exists then check the cast message for the tip amount and value and the sender details
-// check the user allowance and respond success or you dont have allowance
-// if does not exists, check if eligible and then create user and give allowance
-// the check message and response success tip
-// if not eligible respond you are not eligoble to tip
-
 export async function processWebhookData(hash: string) {
     console.log('processWebhookData started');
 

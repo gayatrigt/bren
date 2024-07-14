@@ -41,7 +41,6 @@ export async function processTip(
             return; // Exit the function early
         }
 
-
         // Check if the hashtag is valid
         if (!validHashtags.includes(lowercaseHashtag)) {
             const result = await botReplyFail(
