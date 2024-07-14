@@ -3,11 +3,5 @@
         "pages/api/**/*.ts": {
             "maxDuration": 60
         }
-    },
-    "crons": [
-        {
-            "path": "/api/cron/updateRankings",
-            "schedule": "*/30 * * * *"
-        }
-    ]
+    }
 }

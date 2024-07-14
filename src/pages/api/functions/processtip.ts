@@ -90,6 +90,36 @@ export async function processTip(
             }
 
             if (createdTransaction) {
+                // Upsert for fromFid
+                await db.userRankings.upsert({
+                    where: { fid: fromFid },
+                    update: {
+                        tipsSent: { increment: tipAmount },
+                        tipsSentCount: { increment: 1 }
+                    },
+                    create: {
+                        fid: fromFid,
+                        walletAddress: fromAddress,
+                        tipsSent: tipAmount,
+                        tipsSentCount: 1
+                    }
+                });
+
+                // Upsert for toFid
+                await db.userRankings.upsert({
+                    where: { fid: toFid },
+                    update: {
+                        tipsReceived: { increment: tipAmount },
+                        tipsReceivedCount: { increment: 1 }
+                    },
+                    create: {
+                        fid: toFid,
+                        walletAddress: toAddress,
+                        tipsReceived: tipAmount,
+                        tipsReceivedCount: 1
+                    }
+                });
+
                 const allowanceLeft = currentAllowance - tipAmount;
                 const result = await botReplySuccess(
                     castHash,

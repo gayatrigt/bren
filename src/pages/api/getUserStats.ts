@@ -12,17 +12,27 @@ export function getStartOfWeek(): Date {
     return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), diff, 0, 0, 0, 0));
 }
 
-async function getUserRankAndPoints(fid: number) {
-    const ranking = await db.userRanking.findUnique({
-        where: { fid },
-        select: { rank: true, totalPoints: true, updatedAt: true }
-    });
+async function getUserRank(fid: number) {
+    const userDetails = await db.userRankings.findUnique({
+        where: {
+            fid: fid,
+        },
+    })
+    const userRank = await db.userRankings.count({
+        where: {
+            tipsReceived: { gt: userDetails?.tipsReceived || 0 },
+        },
+    })
 
     return {
-        rank: ranking?.rank || 0,
-        pointsEarned: ranking?.totalPoints ? Number(ranking.totalPoints) : 0,
-        lastUpdated: ranking?.updatedAt || null
-    };
+        rank: userRank + 1,
+        tipsReceived: userDetails?.tipsReceived || 0
+    }
+}
+
+async function getUserAllowance(wallet: string): Promise<number> {
+    const allowance: number = await stack.getPoints(wallet);
+    return allowance
 }
 
 export default async function handler(
@@ -54,18 +64,17 @@ export default async function handler(
             },
         })
 
-        // Get rank, points, and last updated time from the ranking table
-        const { rank, pointsEarned, lastUpdated } = await getUserRankAndPoints(numericFid);
+        // Get rank
+        const details = await getUserRank(numericFid);
+        const rank = details.rank;
+        const pointsEarned = details.tipsReceived;
 
         let response: any = {
             rank,
-            pointsEarned,
-            lastRankUpdate: lastUpdated,
             startOfWeek
         };
 
-        if (!user && rank === 0) {
-
+        if (!user) {
             const details = await getUserById(numericFid)
 
             if (details && details.verified_addresses.eth_addresses[0]) {
@@ -75,17 +84,23 @@ export default async function handler(
 
                 if (userEligibility !== 'NOT_WHITELISTED') {
                     let totalAllowance: number;
+                    let invitesLeft: number;
 
                     if (userEligibility == "ALLIES") {
                         totalAllowance = 500
+                        invitesLeft = 3
                     } else if (userEligibility == "SPLITTERS") {
                         totalAllowance = 100
+                        invitesLeft = 3
                     } else if (userEligibility == "POWER_BADGE") {
                         totalAllowance = 300
+                        invitesLeft = 0
                     } else if (userEligibility == "FOLLOWER") {
                         totalAllowance = 25
+                        invitesLeft = 0
                     } else {
                         totalAllowance = 0
+                        invitesLeft = 0
                     }
 
                     response = {
@@ -94,63 +109,63 @@ export default async function handler(
                         weeklyAllowanceLeft: totalAllowance,
                         totalAllowance,
                         recentInviteesPfps: [],
-                        invitesLeft: 3,
+                        invitesLeft,
+                        pointsEarned: 0,
                     }
                     return res.status(200).json(response)
-
                 }
             }
             return res.status(200).json({ error: 'User not found or not whitelisted' })
         }
 
-        if (user) {
-            // 5 & 6. Weekly allowance left and total allowance
-            const totalAllowance = await getUserAllowance(user.walletAddress)
-            const weeklyTransactions = await db.transaction.aggregate({
-                where: {
-                    fromAddress: user.walletAddress,
-                    createdAt: { gte: startOfWeek },
-                },
-                _sum: { amount: true },
-            })
-            const weeklyAllowanceLeft = totalAllowance - (weeklyTransactions._sum.amount ? Number(weeklyTransactions._sum.amount) : 0)
+        // User exists
+        const totalAllowance = await getUserAllowance(user.walletAddress)
+        const weeklyTransactions = await db.transaction.aggregate({
+            where: {
+                fromAddress: user.walletAddress,
+                createdAt: { gte: startOfWeek },
+            },
+            _sum: { amount: true },
+        })
+        const weeklyAllowanceLeft = totalAllowance - (weeklyTransactions._sum.amount ? Number(weeklyTransactions._sum.amount) : 0)
 
-            // 7. Get last 3 invited users' pfps
-            const invitedUsers = await db.invite.findMany({
-                where: {
-                    invitorFid: numericFid,
-                    createdAt: { gte: startOfWeek },
+        // Get last 3 invited users' pfps
+        const invitedUsers = await db.invite.findMany({
+            where: {
+                invitorFid: numericFid,
+                createdAt: { gte: startOfWeek },
+            },
+            include: {
+                invitee: {
+                    select: { pfp: true },
                 },
-                include: {
-                    invitee: {
-                        select: { pfp: true },
-                    },
-                },
-                orderBy: { createdAt: 'desc' },
-                take: 3,
-            })
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 3,
+        })
 
-            // 8. Invites left
+        // Invites left
+        let invitesLeft = 0;
+        if (user.type === UserType.ALLIES || user.type === UserType.SPLITTERS) {
             const invitesUsed = await db.invite.count({
                 where: {
                     invitorFid: numericFid,
                     createdAt: { gte: startOfWeek },
                 },
             })
-            const invitesLeft = 3 - invitesUsed
+            invitesLeft = 3 - invitesUsed
+        }
 
-            response = {
-                ...response,
-                userType: user.type,
-                weeklyAllowanceLeft,
-                totalAllowance,
-                recentInviteesPfps: invitedUsers.map(invite => invite.invitee?.pfp),
-                invitesLeft,
-                rank,
-                pointsEarned,
-                lastRankUpdate: lastUpdated,
-                startOfWeek
-            }
+        response = {
+            ...response,
+            userType: user.type,
+            weeklyAllowanceLeft,
+            totalAllowance,
+            recentInviteesPfps: invitedUsers.map(invite => invite.invitee?.pfp),
+            invitesLeft,
+            rank,
+            pointsEarned,
+            startOfWeek
         }
 
         res.status(200).json(response)
@@ -159,9 +174,4 @@ export default async function handler(
         console.error('Error fetching user data:', error)
         res.status(500).json({ error: 'Internal server error' })
     }
-}
-
-async function getUserAllowance(wallet: string): Promise<number> {
-    const allowance: number = await stack.getPoints(wallet)
-    return allowance
 }
