@@ -188,7 +188,7 @@ export async function processTip(
 
 // Function to check if fromFid is following toFid using accountFollowCheck
 async function isFollowing(fromFid: number): Promise<boolean> {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/accountFollowCheck?fid=${fromFid}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/accountFollowCheck?fid=${fromFid}`);
     if (!response.ok) {
         throw new Error('Network response was not ok');
     }
