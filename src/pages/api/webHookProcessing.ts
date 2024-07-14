@@ -90,15 +90,7 @@ export async function processWebhookData(hash: string) {
             throw new Error('No verified Ethereum address found for user');
         }
 
-        let toFid = 0
-
-        if (neynarCast.parent_author) {
-            toFid = neynarCast.parent_author.fid
-        }
-
-        if (neynarCast.mentioned_profiles[0]) {
-            toFid = neynarCast.mentioned_profiles[0].fid
-        }
+        const toFid = await getRecipientFid(neynarCast);
 
         if (toFid == 0) {
             throw new Error('No sender details found')
@@ -254,4 +246,28 @@ const getUserAllowance = async (wallet: string): Promise<number> => {
     const allowance: number = await stack.getPoints(wallet);
     return allowance
     // return 10000
+}
+
+async function getRecipientFid(neynarCast: Cast): Promise<number> {
+    // First, check for parent author
+    if (neynarCast.parent_author) {
+        return neynarCast.parent_author.fid;
+    }
+
+    // If no parent author, check mentioned profiles
+    if (neynarCast.mentioned_profiles && neynarCast.mentioned_profiles.length > 0) {
+        // If the first mentioned profile is not 670648, return its FID
+        if (neynarCast.mentioned_profiles[0]?.fid !== 670648) {
+            return neynarCast.mentioned_profiles[0]?.fid || 0
+        }
+
+        // If the first profile is 670648 and there's a second profile, return its FID
+        if (neynarCast.mentioned_profiles.length > 1) {
+            return neynarCast.mentioned_profiles[1]?.fid || 0
+        }
+    }
+
+    return 0
+    // If we reach here, no valid recipient was found
+    throw new Error('No valid recipient found: neither parent author nor suitable mentioned profiles');
 }
