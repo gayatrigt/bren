@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         const webhookUrl = isInvite ? INVITE_WEBHOOK_URL : TIP_WEBHOOK_URL;
-        await callWebhook(webhookUrl, hash);
+        callWebhook(webhookUrl, hash);
 
         await new Promise(resolve => setTimeout(resolve, 200));
         return res.status(200).json({ message: 'Webhook received and processed successfully' });
