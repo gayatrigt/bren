@@ -92,17 +92,39 @@ async function checkUserType(walletAddress: string): Promise<string> {
 
 async function checkIfFollowsBrenChannel(fid: number): Promise<'bren' | undefined> {
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channelFollowCheck?fid=${fid}`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        if (!baseUrl) {
+            throw new Error('NEXT_PUBLIC_BASE_URL is not defined');
         }
+
+        const url = `${baseUrl}/api/channelFollowCheck?fid=${fid}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. ${errorText}`);
+        }
+
         const data: ChannelFollowCheckResponse = await response.json();
 
-        const participant = data.data.FarcasterChannelParticipants.FarcasterChannelParticipant?.[0];
+        // Check if the data structure is as expected
+        if (!data?.data?.FarcasterChannelParticipants?.FarcasterChannelParticipant) {
+            console.warn('Unexpected data structure:', data);
+            return undefined;
+        }
+
+        const participant = data.data.FarcasterChannelParticipants.FarcasterChannelParticipant[0];
         return participant?.channelName === 'bren' ? 'bren' : undefined;
 
-    } catch (err) {
-        console.error('Error: Failed to fetch channel follow status', err);
+    } catch (error) {
+        console.error('Error in checkIfFollowsBrenChannel function:', error);
+        // Depending on your error handling strategy, you might want to rethrow the error
+        // or return undefined as you're currently doing
         return undefined;
     }
 }

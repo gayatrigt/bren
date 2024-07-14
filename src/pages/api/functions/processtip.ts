@@ -188,11 +188,39 @@ export async function processTip(
 
 // Function to check if fromFid is following toFid using accountFollowCheck
 async function isFollowing(fromFid: number): Promise<boolean> {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/accountFollowCheck?fid=${fromFid}`);
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        if (!baseUrl) {
+            throw new Error('NEXT_PUBLIC_BASE_URL is not defined');
+        }
+
+        const url = `${baseUrl}/api/accountFollowCheck?fid=${fromFid}`;
+        const response = await fetch(url, {
+            method: 'GET', // Explicitly stating it's a GET request
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. ${errorText}`);
+        }
+
+        const data: checkAccountFollow = await response.json();
+
+        // Check if the data structure is as expected
+        if (!data?.data?.SocialFollowings?.Following) {
+            console.warn('Unexpected data structure:', data);
+            return false;
+        }
+
+        const following = data.data.SocialFollowings.Following[0];
+        return following?.followingProfileId === '670648';
+    } catch (error) {
+        console.error('Error in isFollowing function:', error);
+        // Depending on your error handling strategy, you might want to rethrow the error
+        // or return a default value
+        throw error;
     }
-    const data: checkAccountFollow = await response.json();
-    const following = data.data.SocialFollowings.Following?.[0];
-    return following?.followingProfileId === '670648';
 }
