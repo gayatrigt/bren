@@ -65,17 +65,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         const hash = webhookData.data.hash;
+        const text = webhookData.data.text;
 
         console.log('Extracted Hash:', hash);
+        console.log('Extracted Text:', text);
 
-        // Make an API call to process the data
-        fetch(`https://bren.vercel.app/api/process-webhook`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ hash }),
-        }).catch(error => console.error('Error calling process API:', error));
+        const isInvite = /\binvite\b/i.test(text);
+        const isTip = /\$bren/i.test(text);
+
+        const amountFromText = text.match(/\$?\s*(\d+)\s*\$?\s*bren\b/i);
+
+        // Log the results
+        console.log('Is Invite:', isInvite);
+        console.log('Is Tip:', isTip);
+
+        // If you need to use these booleans later in your code
+        if (isInvite) {
+            fetch(`https://bren.vercel.app/api/inviteWebhookProcessing`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ hash }),
+            }).catch(error => console.error('Error calling process API:', error));
+
+            console.log('This is an invite message');
+        } else if (isTip) {
+            fetch(`https://bren.vercel.app/api/process-webhook`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ hash }),
+            }).catch(error => console.error('Error calling process API:', error));
+
+            console.log('This is a tip message');
+        } else {
+            console.log('This message is neither an invite nor a tip');
+        }
 
         setTimeout(() => {
             // Respond to the webhook immediately

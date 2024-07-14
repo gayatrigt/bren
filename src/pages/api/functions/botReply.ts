@@ -167,3 +167,58 @@ export async function botReply(userHash: string, castText: string, message: stri
         };
     }
 }
+
+
+
+export async function botReplyInvite(userHash: string, castText: string, username: string, invitesLeft: number): Promise<BotReplyResult> {
+    try {
+        // Check if a reply already exists
+        const existingReply = await db.botReply.findUnique({
+            where: {
+                userCastHash: userHash
+            }
+        });
+
+        if (existingReply) {
+            return {
+                success: false,
+                message: "A reply to this cast already exists."
+            };
+        }
+
+        // Post the new reply
+        const response = await sdk.postCast({
+            signer_uuid: process.env.SIGNER_UUID,
+            text: castText,
+            parent: userHash,
+            embeds: [
+                {
+                    url: `https://bren-frames.vercel.app/frames/invite?user=${encodeURIComponent(username)}&left=${encodeURIComponent(invitesLeft)}`
+                }
+            ],
+        }, { api_key: process.env.NEYNAR_API_KEY });
+
+        const castHash = response.data.cast.hash;
+
+        // Update the database
+        await db.botReply.create({
+            data: {
+                botcastHash: castHash,
+                userCastHash: userHash,
+            },
+        });
+
+        return {
+            success: true,
+            message: "Reply posted successfully.",
+            castHash: castHash
+        };
+
+    } catch (error) {
+        console.error('Error in botReply:', error);
+        return {
+            success: false,
+            message: "An error occurred while posting the reply."
+        };
+    }
+}

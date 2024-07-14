@@ -7,6 +7,7 @@ import { processTip } from "./functions/processtip";
 import { checkWhitelist } from "./functions/checkWhiteList";
 import { botReply } from "./functions/botReply";
 import { setUserAllowance } from "./functions/setAllowance";
+import { processInvite } from "./functions/processInvite";
 
 
 export async function processWebhookData(hash: string) {
@@ -70,77 +71,169 @@ export async function processWebhookData(hash: string) {
             console.log('User already exists in the database');
             // Perform actions for existing user
 
+            const user = await db.user.findUnique({
+                where: { fid: fromFid },
+                select: { type: true }
+            });
 
-        } else {
-            console.log('New user detected');
-            // Perform actions for new user, e.g., create a new user record
+            if (!user) {
+                throw new Error('User not found in the database');
+            }
 
-            const isPowerBadge = neynarCast.author.power_badge
+            const userType = user.type;
 
-            const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
+            if (userType === 'ALLIES' || userType === 'SPLITTERS') {
+                console.log(`User is of type ${userType} and can invite`);
 
-            if (result === 'NOT_WHITELISTED') {
-                console.log('User is not whitelisted');
+                // Perform actions for users who can invite
+                try {
+                    const inviteResult = await processInvite(fromFid, neynarCast);
+                    console.log('Invite processed successfully');
 
-                const result = await botReply(
-                    castHash,
-                    `Hey ${fromUsername}! You are not eligible to invite a Bren`,
-                    `You are not eligible to invite a Bren`
-                );
+                    // You can add more specific success handling here if needed
+                } catch (error) {
+                    console.error('Error processing invite:', error);
 
-                if (result.success) {
-                    console.log('Reply posted successfully:', result.castHash);
-                } else {
-                    console.error('Failed to post reply:', result.message);
+                    // Determine the error message to send back to the user
+                    let errorMessage = 'An error occurred while processing your invite.';
+                    if (error instanceof Error) {
+                        if (error.message.includes('no invites left')) {
+                            errorMessage = `Hey ${fromUsername}! You've used all your invites for this week.`;
+                        } else if (error.message.includes('does not have a verified wallet address')) {
+                            errorMessage = `Hey ${fromUsername}! There was an issue with the wallet address. Please make sure all mentioned users have verified wallet addresses.`;
+                        }
+                        // Add more specific error cases as needed
+                    }
+
+                    // Send error message back to the user
+                    try {
+                        const result = await botReply(
+                            castHash,
+                            errorMessage,
+                            'Invite Processing Error'
+                        );
+
+                        if (result.success) {
+                            console.log('Error reply posted successfully:', result.castHash);
+                        } else {
+                            console.error('Failed to post error reply:', result.message);
+                        }
+                    } catch (replyError) {
+                        console.error('Error sending bot reply:', replyError);
+                    }
                 }
 
-            } if (result === 'FOLLOWER' || result === 'INVITED' || result === 'POWER_BADGE') {
-                console.log('User cannot invite');
+            } else {
+                console.log('New user detected');
+                // Perform actions for new user, e.g., create a new user record
 
-                const result = await botReply(
-                    castHash,
-                    `Hey ${fromUsername}! You are not eligible to invite a Bren. Only Build committers can invite.`,
-                    `You are not eligible to invite a Bren`
-                );
+                const isPowerBadge = neynarCast.author.power_badge
 
-                if (result.success) {
-                    console.log('Reply posted successfully:', result.castHash);
-                } else {
-                    console.error('Failed to post reply:', result.message);
+                const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
+
+                if (result === 'NOT_WHITELISTED') {
+                    console.log('User is not whitelisted');
+
+                    const result = await botReply(
+                        castHash,
+                        `Hey ${fromUsername}! You are not eligible to invite a Bren`,
+                        `You are not eligible to invite a Bren`
+                    );
+
+                    if (result.success) {
+                        console.log('Reply posted successfully:', result.castHash);
+                    } else {
+                        console.error('Failed to post reply:', result.message);
+                    }
+
+                } if (result === 'FOLLOWER' || result === 'INVITED' || result === 'POWER_BADGE') {
+                    console.log('User cannot invite');
+
+                    const result = await botReply(
+                        castHash,
+                        `Hey ${fromUsername}! You are not eligible to invite a Bren. Only Build committers can invite.`,
+                        `You are not eligible to invite a Bren`
+                    );
+
+                    if (result.success) {
+                        console.log('Reply posted successfully:', result.castHash);
+                    } else {
+                        console.error('Failed to post reply:', result.message);
+                    }
+                }
+                else if (result === 'ALLIES' || result === 'SPLITTERS') {
+                    console.log(`User is whitelisted as ${result}`);
+
+                    try {
+                        const newUser = await db.user.create({
+                            data: {
+                                walletAddress: fromAddress,
+                                fid: fromFid,
+                                display_name: neynarCast.author.display_name,
+                                username: fromUsername,
+                                pfp: neynarCast.author.pfp_url,
+                                isAllowanceGiven: false,
+                                type: result
+                            },
+                        });
+
+                        console.log(`New user created successfully. FID: ${fromFid}`);
+
+                        try {
+                            await setUserAllowance(fromFid, fromAddress, result);
+                            console.log('Allowance set and database updated successfully');
+
+                            // Perform actions for users who can invite
+                            try {
+                                const inviteResult = await processInvite(fromFid, neynarCast);
+                                console.log('Invite processed successfully');
+
+                                // You can add more specific success handling here if needed
+                            } catch (error) {
+                                console.error('Error processing invite:', error);
+
+                                // Determine the error message to send back to the user
+                                let errorMessage = 'An error occurred while processing your invite.';
+                                if (error instanceof Error) {
+                                    if (error.message.includes('no invites left')) {
+                                        errorMessage = `Hey @${fromUsername}! You've used all your invites for this week.`;
+                                    } else if (error.message.includes('does not have a verified wallet address')) {
+                                        errorMessage = `Hey @${fromUsername}! There was an issue with the wallet address. Please make sure all mentioned users have verified wallet addresses.`;
+                                    }
+                                    // Add more specific error cases as needed
+                                }
+
+                                // Send error message back to the user
+                                try {
+                                    const result = await botReply(
+                                        castHash,
+                                        errorMessage,
+                                        'Invite Processing Error'
+                                    );
+
+                                    if (result.success) {
+                                        console.log('Error reply posted successfully:', result.castHash);
+                                    } else {
+                                        console.error('Failed to post error reply:', result.message);
+                                    }
+                                } catch (replyError) {
+                                    console.error('Error sending bot reply:', replyError);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Failed to set allowance:', error);
+                        }
+
+                    } catch (error) {
+                        console.error(`Error creating new user. FID: ${fromFid}`, error);
+                    }
+
+
                 }
             }
-            else if (result === 'ALLIES' || result === 'SPLITTERS') {
-                console.log(`User is whitelisted as ${result}`);
 
-                try {
-                    const newUser = await db.user.create({
-                        data: {
-                            walletAddress: fromAddress,
-                            fid: fromFid,
-                            display_name: neynarCast.author.display_name,
-                            username: fromUsername,
-                            pfp: neynarCast.author.pfp_url,
-                            isAllowanceGiven: false,
-                            type: result
-                        },
-                    });
-
-                    console.log(`New user created successfully. FID: ${fromFid}`);
-
-                } catch (error) {
-                    console.error(`Error creating new user. FID: ${fromFid}`, error);
-                }
-
-                try {
-                    await setUserAllowance(fromFid, fromAddress, result);
-                    console.log('Allowance set and database updated successfully');
-                } catch (error) {
-                    console.error('Failed to set allowance:', error);
-                }
-
-            }
         }
-
+        // Add this closing brace to properly close the try block
     } catch (error) {
         console.error('Error in processWebhookData:', error);
     }
@@ -163,39 +256,3 @@ const checkUserExists = async (fid: number, walletAddress: string) => {
         return false;
     }
 };
-
-
-async function getUserCurrentAllowance(primaryAddress: string): Promise<number> {
-    // Get the user's base allowance
-    const allowance = await getUserAllowance(primaryAddress);
-
-    const now = new Date();
-    const from = new Date(now.setDate(now.getDate() - 7)).setHours(0, 0, 0, 0);
-
-    // Get the sum of 'value' for transactions from this week for the primary address
-    const result = await db.transaction.aggregate({
-        where: {
-            createdAt: {
-                gte: new Date(from)
-            },
-            fromAddress: primaryAddress
-        },
-        _sum: {
-            amount: true
-        }
-    });
-
-    // Get the total amount given (sum of 'value')
-    const totalAmountGiven = result._sum.amount || 0;
-
-    // Calculate allowance left
-    const allowanceLeft = allowance - totalAmountGiven;
-
-    return allowanceLeft;
-}
-
-const getUserAllowance = async (wallet: string): Promise<number> => {
-    const allowance: number = await stack.getPoints(wallet);
-    return allowance
-    // return 10000
-}

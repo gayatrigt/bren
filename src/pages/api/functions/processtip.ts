@@ -1,6 +1,7 @@
 import { db } from "~/server/db";
 import { getUserById } from "~/server/neynar";
 import { botReply, botReplyFail, botReplySuccess } from "./botReply";
+import accountFollowCheck, { checkAccountFollow } from "../accountFollowCheck";
 
 const validHashtags = ["integrity", "teamwork", "tenacity", "creativity", "optimism"];
 
@@ -19,6 +20,25 @@ export async function processTip(
     try {
         // Convert hashtagValue to lowercase for case-insensitive comparison
         const lowercaseHashtag = hashtagValue.toLowerCase();
+        // Check if the fromFid is following brenbot
+        const following = await isFollowing(fromFid);
+
+        if (!following) {
+            const result = await botReplyFail(
+                castHash,
+                `Hey @${fromUsername}!\nYou cannot tip bren as you are not following @brenbot.`,
+                "Tip Failed to be processed",
+                currentAllowance
+            );
+
+            if (result.success) {
+                console.log('Reply posted successfully:', result.castHash);
+            } else {
+                console.error('Failed to post reply:', result.message);
+            }
+            return; // Exit the function early
+        }
+
 
         // Check if the hashtag is valid
         if (!validHashtags.includes(lowercaseHashtag)) {
@@ -164,4 +184,15 @@ export async function processTip(
             console.error('Failed to post error reply:', errorResult.message);
         }
     }
+}
+
+// Function to check if fromFid is following toFid using accountFollowCheck
+async function isFollowing(fromFid: number): Promise<boolean> {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/accountFollowCheck?fid=${fromFid}`);
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    const data: checkAccountFollow = await response.json();
+    const following = data.data.SocialFollowings.Following?.[0];
+    return following?.followingProfileId === '670648';
 }

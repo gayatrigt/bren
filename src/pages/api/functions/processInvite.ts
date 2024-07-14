@@ -1,12 +1,12 @@
 import { UserType } from '@prisma/client';
-import { botReply } from './botReply';
+import { botReply, botReplyInvite } from './botReply';
 import { db } from '~/server/db';
 import { getUserById } from '~/server/neynar';
 import { Cast } from '~/contracts/NeynarCast';
 import { getStartOfWeek } from '../getUserStats';
 import { setUserAllowance } from './setAllowance';
 
-async function processInvite(invitorFid: number, cast: Cast) {
+export async function processInvite(invitorFid: number, cast: Cast) {
     const startOfWeek = getStartOfWeek();
 
     // Check if invitor has a wallet address
@@ -68,8 +68,8 @@ async function processInvite(invitorFid: number, cast: Cast) {
             await setUserAllowance(newUser.fid, newUser.walletAddress, UserType.INVITED);
 
             // 5. Send bot reply for successful invite
-            const replyText = `Hey ${cast.author.username}! You have successfully invited @${mentionedProfile.username}.`;
-            await botReply(cast.hash, replyText, "Invite Successful");
+            const replyText = `Hey @${cast.author.username}! You have successfully invited @${mentionedProfile.username}.`;
+            await botReplyInvite(cast.hash, replyText, mentionedProfile.username, invitesLeft - 1);
 
             invitesLeft--;
 
