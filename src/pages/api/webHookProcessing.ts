@@ -119,7 +119,8 @@ export async function processWebhookData(hash: string) {
             // Perform actions for existing user
 
             const currentAllowance = await getUserCurrentAllowance(fromAddress);
-            const allowanceLeft = currentAllowance - tipAmount
+            const allowanceLeft = currentAllowance - tipAmount;
+            console.log(`Current Allowance: ${currentAllowance}, Allowance Left: ${allowanceLeft}`);
 
             await processTip(
                 tipAmount,

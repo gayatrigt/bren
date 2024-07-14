@@ -20,8 +20,10 @@ export async function processTip(
     try {
         // Convert hashtagValue to lowercase for case-insensitive comparison
         const lowercaseHashtag = hashtagValue.toLowerCase();
+        console.log('Lowercase Hashtag:', lowercaseHashtag);
         // Check if the fromFid is following brenbot
         const following = await isFollowing(fromFid);
+        console.log('Is following brenbot:', following);
 
         if (!following) {
             const result = await botReplyFail(
@@ -194,7 +196,7 @@ async function isFollowing(fromFid: number): Promise<boolean> {
             throw new Error('NEXT_PUBLIC_BASE_URL is not defined');
         }
 
-        const url = `${baseUrl}/api/accountFollowCheck?fid=${fromFid}`;
+        const url = `https://bren.vercel.app/api/accountFollowCheck?fid=${fromFid}`;
         const response = await fetch(url, {
             method: 'GET', // Explicitly stating it's a GET request
             headers: {
