@@ -40,6 +40,16 @@ export async function processInvite(invitorFid: number, cast: Cast) {
             continue;
         }
 
+        if (mentionedProfile.fid === invitorFid) {
+            console.log(`Invitee ${mentionedProfile.fid} is the same as the invitor. Skipping.`);
+            continue;
+        }
+
+        if (mentionedProfile.fid === 670648) {
+            console.log(`Invitee ${mentionedProfile.fid} is the bot. Skipping.`);
+            continue;
+        }
+
         try {
             // 2. Create invite record and user
             const invite = await db.invite.create({
