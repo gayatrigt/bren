@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { processWebhookData } from "./webHookProcessing";
 
 interface WebhookResponse {
     created_at: number;
@@ -72,6 +71,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const webhookData = req.body as WebhookResponse;
+
+        console.log('Webhook data:', webhookData);
 
         if (!webhookData || !webhookData.data) {
             console.error('Invalid webhook data structure');

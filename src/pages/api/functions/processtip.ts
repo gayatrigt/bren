@@ -84,63 +84,30 @@ export async function processTip(
                 return; // Exit the function early
             }
 
-            const data = {
-                amount: tipAmount,
-                fromFid,
-                fromAddress,
-                fromUsername,
-                toUsername,
-                toFid,
-                toAddress: toAddress,
-                text: message,
-                value: hashtagValue,
-                castHash,
-                parentCastHash: neynarCast.parent_author ? neynarCast.parent_hash : null,
-                link: `https://warpcast.com/${fromUsername}/${castHash}`,
-            };
+            await db.$transaction(async (prisma) => {
+                const data = {
+                    amount: tipAmount,
+                    fromFid,
+                    fromAddress,
+                    fromUsername,
+                    toUsername,
+                    toFid,
+                    toAddress: toAddress,
+                    text: message,
+                    value: hashtagValue,
+                    castHash,
+                    parentCastHash: neynarCast.parent_author ? neynarCast.parent_hash : null,
+                    link: `https://warpcast.com/${fromUsername}/${castHash}`,
+                };
 
-            console.log('Attempting to create transaction in database:', data);
+                console.log('Attempting to create transaction in database:', data);
 
-            let createdTransaction;
-            try {
-                createdTransaction = await db.transaction.create({ data });
-                console.log('Transaction created successfully:', createdTransaction);
-            } catch (dbError) {
-                console.error('Failed to create transaction in database:', dbError);
-                throw new Error('Database transaction creation failed');
-            }
+                const createdTransaction = await prisma.transaction.create({ data });
 
-            if (createdTransaction) {
-                // Upsert for fromFid
-                await db.userRankings.upsert({
-                    where: { fid: fromFid },
-                    update: {
-                        tipsSent: { increment: tipAmount },
-                        tipsSentCount: { increment: 1 }
-                    },
-                    create: {
-                        fid: fromFid,
-                        walletAddress: fromAddress,
-                        tipsSent: tipAmount,
-                        tipsSentCount: 1
-                    }
-                });
+                await upsertUserRankings(fromFid, fromAddress, tipAmount, false);
+                await upsertUserRankings(toFid, toAddress, tipAmount, true);
 
-                // Upsert for toFid
-                await db.userRankings.upsert({
-                    where: { fid: toFid },
-                    update: {
-                        tipsReceived: { increment: tipAmount },
-                        tipsReceivedCount: { increment: 1 }
-                    },
-                    create: {
-                        fid: toFid,
-                        walletAddress: toAddress,
-                        tipsReceived: tipAmount,
-                        tipsReceivedCount: 1
-                    }
-                });
-
+                // ... (keep the existing bot reply logic)
                 const allowanceLeft = currentAllowance - tipAmount;
                 const result = await botReplySuccess(
                     castHash,
@@ -155,9 +122,8 @@ export async function processTip(
                 } else {
                     console.error('Failed to post reply:', result.message);
                 }
-            } else {
-                console.error('Transaction was not created in the database, skipping bot reply');
-            }
+            });
+
         } else {
             const result = await botReplyFail(
                 castHash,
@@ -220,4 +186,35 @@ async function isFollowing(fromFid: number): Promise<boolean> {
         // or return a default value
         throw error;
     }
+}
+
+async function upsertUserRankings(fid: number, walletAddress: string, amount: number, isReceived: boolean) {
+    await db.$transaction(async (prisma) => {
+        // Ensure User exists
+        await prisma.user.upsert({
+            where: { fid: fid },
+            update: { walletAddress: walletAddress },
+            create: {
+                fid: fid,
+                walletAddress: walletAddress,
+                // Add other required fields here
+            }
+        });
+
+        // Update UserRankings
+        await prisma.userRankings.upsert({
+            where: { fid: fid },
+            update: {
+                walletAddress: walletAddress,
+                [isReceived ? 'tipsReceived' : 'tipsSent']: { increment: amount },
+                [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: { increment: 1 }
+            },
+            create: {
+                fid: fid,
+                walletAddress: walletAddress,
+                [isReceived ? 'tipsReceived' : 'tipsSent']: amount,
+                [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: 1
+            }
+        });
+    });
 }
