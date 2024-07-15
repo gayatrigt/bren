@@ -1,5 +1,5 @@
 import { UserType } from '@prisma/client';
-import { botReply, botReplyInvite } from './botReply';
+import { botReply, botReplyInvite, botReplywihtoutFrame } from './botReply';
 import { db } from '~/server/db';
 import { getUserById } from '~/server/neynar';
 import { Cast } from '~/contracts/NeynarCast';
@@ -45,6 +45,17 @@ export async function processInvite(invitorFid: number, cast: Cast) {
             continue;
         }
 
+        // Check if the user already exists in the database
+        const existingUser = await db.user.findUnique({
+            where: { fid: mentionedProfile.fid }
+        });
+
+        if (existingUser) {
+            console.log(`User ${mentionedProfile.fid} is already invited to Bren.`);
+            await botReplywihtoutFrame(cast.hash, `Hey @${cast.author.username}, @${mentionedProfile.username} is already invited to Bren.`);
+            continue;
+        }
+
         if (mentionedProfile.fid === 670648) {
             console.log(`Invitee ${mentionedProfile.fid} is the bot. Skipping.`);
             continue;
@@ -70,27 +81,29 @@ export async function processInvite(invitorFid: number, cast: Cast) {
                     username: mentionedProfile.username,
                     pfp: mentionedProfile.pfp_url,
                     isAllowanceGiven: false,
-                    type: UserType.INVITED
+                    type: 'INVITED'
                 }
             });
 
             // 3. Set allowance for the new user
-            await setUserAllowance(newUser.fid, newUser.walletAddress, UserType.INVITED);
+            let allowanceSet = false;
+            try {
+                await setUserAllowance(newUser.fid, newUser.walletAddress, UserType.INVITED);
+                allowanceSet = true;
+            } catch (error) {
+                console.error(`Error setting allowance for user ${newUser.fid}:`, error);
+            }
 
-            // 5. Send bot reply for successful invite
-            const replyText = `Hey @${cast.author.username}! You have successfully invited @${mentionedProfile.username}.`;
-            await botReplyInvite(cast.hash, replyText, mentionedProfile.username, invitesLeft - 1);
-
-            invitesLeft--;
+            // Only send bot reply if allowance was successfully set
+            if (allowanceSet) {
+                // 5. Send bot reply for successful invite
+                const replyText = `Hey @${cast.author.username}! You have successfully invited @${mentionedProfile.username}.`;
+                await botReplyInvite(cast.hash, replyText, invitorFid, mentionedProfile.fid);
+                invitesLeft--;
+            }
 
         } catch (error) {
             console.error(`Error processing invite for user ${mentionedProfile.fid}:`, error);
         }
-    }
-
-    if (invitesLeft < 3 - invitesUsed) {
-        const invitedCount = 3 - invitesUsed - invitesLeft;
-        const finalReply = `You have successfully invited ${invitedCount} user${invitedCount > 1 ? 's' : ''}. You have ${invitesLeft} invite${invitesLeft !== 1 ? 's' : ''} left for this week.`;
-        await botReply(cast.hash, finalReply, "Invite Summary");
     }
 }
