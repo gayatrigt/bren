@@ -172,19 +172,6 @@ export async function botReply(userHash: string, castText: string, message: stri
 
 export async function botReplyInvite(userHash: string, castText: string, invitorfid: number, fid: number): Promise<BotReplyResult> {
     try {
-        // Check if a reply already exists
-        const existingReply = await db.botReply.findUnique({
-            where: {
-                userCastHash: userHash
-            }
-        });
-
-        if (existingReply) {
-            return {
-                success: false,
-                message: "A reply to this cast already exists."
-            };
-        }
 
         // Post the new reply
         const response = await sdk.postCast({
@@ -225,19 +212,6 @@ export async function botReplyInvite(userHash: string, castText: string, invitor
 
 export async function botReplywihtoutFrame(userHash: string, castText: string): Promise<BotReplyResult> {
     try {
-        // Check if a reply already exists
-        const existingReply = await db.botReply.findUnique({
-            where: {
-                userCastHash: userHash
-            }
-        });
-
-        if (existingReply) {
-            return {
-                success: false,
-                message: "A reply to this cast already exists."
-            };
-        }
 
         // Post the new reply
         const response = await sdk.postCast({
