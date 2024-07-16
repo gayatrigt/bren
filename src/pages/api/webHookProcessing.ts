@@ -95,7 +95,6 @@ export async function processWebhookData(hash: string) {
         if (!toFid) {
             throw new Error('No sender details found')
         }
-        console.log("🚀 ~ processWebhookData ~ toFid:", toFid)
 
         const userExists = await checkUserExists(fromFid, fromAddress)
 
