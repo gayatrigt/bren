@@ -33,16 +33,17 @@ export async function processInvite(invitorFid: number, cast: Cast) {
 
     // 4. Process each mentioned profile
     for (const mentionedProfile of cast.mentioned_profiles) {
+        console.log("🚀 ~ processInvite ~ mentionedProfile:", mentionedProfile.username)
         if (invitesLeft <= 0) break;
 
         const inviteeWalletAddress = mentionedProfile.verified_addresses.eth_addresses[0];
         if (!inviteeWalletAddress) {
-            console.log(`Invitee ${mentionedProfile.fid} does not have a verified wallet address. Skipping.`);
+            console.log(`Invitee ${mentionedProfile.username} does not have a verified wallet address. Skipping.`);
             continue;
         }
 
         if (mentionedProfile.fid === invitorFid) {
-            console.log(`Invitee ${mentionedProfile.fid} is the same as the invitor. Skipping.`);
+            console.log(`Invitee ${mentionedProfile.username} is the same as the invitor. Skipping.`);
             continue;
         }
 
@@ -56,13 +57,13 @@ export async function processInvite(invitorFid: number, cast: Cast) {
         const result = await checkWhitelist(mentionedProfile.fid, inviteeWalletAddress, isPowerBadge);
 
         if (existingUser || result !== 'NOT_WHITELISTED') {
-            console.log(`User ${mentionedProfile.fid} is already invited to Bren.`);
+            console.log(`User ${mentionedProfile.username} is already invited to Bren.`);
             await botReplywihtoutFrame(cast.hash, `Hey @${cast.author.username}, @${mentionedProfile.username} is already invited to Bren.`);
             continue;
         }
 
         if (mentionedProfile.fid === 670648) {
-            console.log(`Invitee ${mentionedProfile.fid} is the bot. Skipping.`);
+            console.log(`Invitee ${mentionedProfile.username} is the bot. Skipping.`);
             continue;
         }
 
@@ -97,7 +98,7 @@ export async function processInvite(invitorFid: number, cast: Cast) {
                 await setUserAllowance(newUser.fid, newUser.walletAddress, UserType.INVITED);
                 allowanceSet = true;
             } catch (error) {
-                console.error(`Error setting allowance for user ${newUser.fid}:`, error);
+                console.error(`Error setting allowance for user ${newUser.username}:`, error);
             }
 
             // Only send bot reply if allowance was successfully set

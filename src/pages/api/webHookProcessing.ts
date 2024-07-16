@@ -92,9 +92,10 @@ export async function processWebhookData(hash: string) {
 
         const toFid = await getRecipientFid(neynarCast);
 
-        if (toFid == 0) {
+        if (!toFid) {
             throw new Error('No sender details found')
         }
+        console.log("🚀 ~ processWebhookData ~ toFid:", toFid)
 
         const userExists = await checkUserExists(fromFid, fromAddress)
 
@@ -255,19 +256,14 @@ async function getRecipientFid(neynarCast: Cast): Promise<number> {
     }
 
     // If no parent author, check mentioned profiles
-    if (neynarCast.mentioned_profiles && neynarCast.mentioned_profiles.length > 0) {
-        // If the first mentioned profile is not 670648, return its FID
-        if (neynarCast.mentioned_profiles[0]?.fid !== 670648) {
-            return neynarCast.mentioned_profiles[0]?.fid || 0
-        }
+    if (!!neynarCast.mentioned_profiles.length) {
+        const profiles = neynarCast.mentioned_profiles.filter(p => p.fid !== 670648)
 
-        // If the first profile is 670648 and there's a second profile, return its FID
-        if (neynarCast.mentioned_profiles.length > 1) {
-            return neynarCast.mentioned_profiles[1]?.fid || 0
+        if (!!profiles[0]?.fid) {
+            return profiles[0]?.fid
         }
     }
 
-    return 0
     // If we reach here, no valid recipient was found
     throw new Error('No valid recipient found: neither parent author nor suitable mentioned profiles');
 }
