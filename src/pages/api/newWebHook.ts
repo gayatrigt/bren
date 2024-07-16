@@ -73,9 +73,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         const webhookData = req.body as WebhookResponse;
 
-        console.log('Webhook data:', webhookData);
+        console.log('Webhook data:', JSON.stringify(webhookData));
 
-        if (!webhookData || !webhookData.data) {
+        if (!webhookData?.data) {
             console.error('Invalid webhook data structure');
             return res.status(400).json({ message: 'Invalid webhook data structure' });
         }
