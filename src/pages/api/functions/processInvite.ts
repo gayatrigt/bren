@@ -5,6 +5,7 @@ import { getUserById } from '~/server/neynar';
 import { Cast } from '~/contracts/NeynarCast';
 import { getStartOfWeek } from '../getUserStats';
 import { setUserAllowance } from './setAllowance';
+import { checkWhitelist } from './checkWhiteList';
 
 export async function processInvite(invitorFid: number, cast: Cast) {
     const startOfWeek = getStartOfWeek();
@@ -50,7 +51,11 @@ export async function processInvite(invitorFid: number, cast: Cast) {
             where: { fid: mentionedProfile.fid }
         });
 
-        if (existingUser) {
+        const isPowerBadge = mentionedProfile.power_badge
+
+        const result = await checkWhitelist(mentionedProfile.fid, inviteeWalletAddress, isPowerBadge);
+
+        if (existingUser || result !== 'NOT_WHITELISTED') {
             console.log(`User ${mentionedProfile.fid} is already invited to Bren.`);
             await botReplywihtoutFrame(cast.hash, `Hey @${cast.author.username}, @${mentionedProfile.username} is already invited to Bren.`);
             continue;
