@@ -20,16 +20,30 @@ export async function setUserAllowance(fid: number, walletAddress: string, userT
                 break;
             case UserType.INVITED:
                 // Check the invite details from the database
-                const invite = await db.invite.findFirst({
+                const invites = await db.invite.findMany({
                     where: { inviteeFid: fid },
-                    include: { invitor: true }
+                    orderBy: { createdAt: 'asc' }, // Order by creation date, oldest first
+                    take: 1 // Take only the first invite
                 });
-                if (!invite) {
+
+                if (invites.length === 0) {
                     throw new Error('No invite found for this user');
                 }
-                if (invite.invitor?.type === UserType.ALLIES) {
+
+                const firstInvite = invites[0];
+
+                // Fetch the invitor's information
+                const invitor = await db.user.findUnique({
+                    where: { fid: firstInvite?.invitorFid }
+                });
+
+                if (!invitor) {
+                    throw new Error('Invitor not found');
+                }
+
+                if (invitor.type === UserType.ALLIES) {
                     allowancePoints = 50;
-                } else if (invite.invitor?.type === UserType.SPLITTERS) {
+                } else if (invitor.type === UserType.SPLITTERS) {
                     allowancePoints = 25;
                 } else {
                     throw new Error('Invalid invitor type');

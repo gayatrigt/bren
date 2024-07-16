@@ -109,6 +109,7 @@ export async function processTip(
 
                 // ... (keep the existing bot reply logic)
                 const allowanceLeft = currentAllowance - tipAmount;
+                console.log(allowanceLeft, "allowanceleft")
                 const result = await botReplySuccess(
                     castHash,
                     `Hey @${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to @${toUsername} for #${hashtagValue}.`,

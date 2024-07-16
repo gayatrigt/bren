@@ -69,7 +69,8 @@ export async function processInvite(invitorFid: number, cast: Cast) {
                     inviteeWalletAddress: mentionedProfile.verified_addresses.eth_addresses[0],
                     invitorFid: invitorFid,
                     invitorAddress: cast.author.verified_addresses.eth_addresses[0],
-                    castHash: cast.hash
+                    castHash: cast.hash,
+                    inviteePfp: mentionedProfile.pfp_url
                 }
             });
 

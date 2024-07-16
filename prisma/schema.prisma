@@ -27,9 +27,6 @@ model User {
     allowanceGivenAt DateTime?     @default(now())
     type             UserType?
     sentTransactions Transaction[] @relation("FromUser")
-    sentInvites      Invite[]      @relation("Invitor")
-    receivedInvites  Invite[]      @relation("Invitee")
-    UserRankings     UserRankings?
 }
 
 model UserRankings {
@@ -39,7 +36,6 @@ model UserRankings {
     tipsSent          Float? @default(0)
     tipsReceivedCount Int?   @default(0)
     tipsSentCount     Int?   @default(0)
-    user              User?  @relation(fields: [walletAddress], references: [walletAddress])
 }
 
 model Transaction {
@@ -63,10 +59,9 @@ model Invite {
     id                   String   @id @default(uuid())
     inviteeFid           Int
     inviteeWalletAddress String?
-    invitee              User?    @relation("Invitee", fields: [inviteeWalletAddress], references: [walletAddress])
+    inviteePfp           String
     invitorFid           Int
     invitorAddress       String?
-    invitor              User?    @relation("Invitor", fields: [invitorAddress], references: [walletAddress])
     createdAt            DateTime @default(now())
     castHash             String
 }

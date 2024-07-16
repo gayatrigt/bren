@@ -135,10 +135,8 @@ export default async function handler(
                 invitorFid: numericFid,
                 createdAt: { gte: startOfWeek },
             },
-            include: {
-                invitee: {
-                    select: { pfp: true },
-                },
+            select: {
+                inviteePfp: true,
             },
             orderBy: { createdAt: 'desc' },
             take: 3,
@@ -161,7 +159,7 @@ export default async function handler(
             userType: user.type,
             weeklyAllowanceLeft,
             totalAllowance,
-            recentInviteesPfps: invitedUsers.map(invite => invite.invitee?.pfp),
+            recentInviteesPfps: invitedUsers.map(invite => invite.inviteePfp),
             invitesLeft,
             rank,
             pointsEarned,
