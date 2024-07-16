@@ -84,46 +84,44 @@ export async function processTip(
                 return; // Exit the function early
             }
 
-            await db.$transaction(async (prisma) => {
-                const data = {
-                    amount: tipAmount,
-                    fromFid,
-                    fromAddress,
-                    fromUsername,
-                    toUsername,
-                    toFid,
-                    toAddress: toAddress,
-                    text: message,
-                    value: hashtagValue,
-                    castHash,
-                    parentCastHash: neynarCast.parent_author ? neynarCast.parent_hash : null,
-                    link: `https://warpcast.com/${fromUsername}/${castHash}`,
-                };
+            const data = {
+                amount: tipAmount,
+                fromFid,
+                fromAddress,
+                fromUsername,
+                toUsername,
+                toFid,
+                toAddress: toAddress,
+                text: message,
+                value: hashtagValue,
+                castHash,
+                parentCastHash: neynarCast.parent_author ? neynarCast.parent_hash : null,
+                link: `https://warpcast.com/${fromUsername}/${castHash}`,
+            };
 
-                console.log('Attempting to create transaction in database:', data);
+            console.log('Attempting to create transaction in database:', data);
 
-                const createdTransaction = await prisma.transaction.create({ data });
+            const createdTransaction = await db.transaction.create({ data });
 
-                await upsertUserRankings(fromFid, fromAddress, tipAmount, false);
-                await upsertUserRankings(toFid, toAddress, tipAmount, true);
+            await upsertUserRankings(fromFid, fromAddress, tipAmount, false);
+            await upsertUserRankings(toFid, toAddress, tipAmount, true);
 
-                // ... (keep the existing bot reply logic)
-                const allowanceLeft = currentAllowance - tipAmount;
-                console.log(allowanceLeft, "allowanceleft")
-                const result = await botReplySuccess(
-                    castHash,
-                    `Hey @${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to @${toUsername} for #${hashtagValue}.`,
-                    toFid,
-                    tipAmount,
-                    allowanceLeft
-                );
+            // ... (keep the existing bot reply logic)
+            const allowanceLeft = currentAllowance - tipAmount;
+            console.log(allowanceLeft, "allowanceleft")
+            const result = await botReplySuccess(
+                castHash,
+                `Hey @${fromUsername}!\nYou have successfully tipped ${tipAmount} $bren to @${toUsername} for #${hashtagValue}.`,
+                toFid,
+                tipAmount,
+                allowanceLeft
+            );
 
-                if (result.success) {
-                    console.log('Reply posted successfully:', result.castHash);
-                } else {
-                    console.error('Failed to post reply:', result.message);
-                }
-            });
+            if (result.success) {
+                console.log('Reply posted successfully:', result.castHash);
+            } else {
+                console.error('Failed to post reply:', result.message);
+            }
 
         } else {
             const result = await botReplyFail(
@@ -190,32 +188,18 @@ async function isFollowing(fromFid: number): Promise<boolean> {
 }
 
 async function upsertUserRankings(fid: number, walletAddress: string, amount: number, isReceived: boolean) {
-    await db.$transaction(async (prisma) => {
-        // Ensure User exists
-        await prisma.user.upsert({
-            where: { fid: fid },
-            update: { walletAddress: walletAddress },
-            create: {
-                fid: fid,
-                walletAddress: walletAddress,
-                // Add other required fields here
-            }
-        });
-
-        // Update UserRankings
-        await prisma.userRankings.upsert({
-            where: { fid: fid },
-            update: {
-                walletAddress: walletAddress,
-                [isReceived ? 'tipsReceived' : 'tipsSent']: { increment: amount },
-                [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: { increment: 1 }
-            },
-            create: {
-                fid: fid,
-                walletAddress: walletAddress,
-                [isReceived ? 'tipsReceived' : 'tipsSent']: amount,
-                [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: 1
-            }
-        });
+    await db.userRankings.upsert({
+        where: { fid: fid },
+        update: {
+            walletAddress: walletAddress,
+            [isReceived ? 'tipsReceived' : 'tipsSent']: { increment: amount },
+            [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: { increment: 1 }
+        },
+        create: {
+            fid: fid,
+            walletAddress: walletAddress,
+            [isReceived ? 'tipsReceived' : 'tipsSent']: amount,
+            [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: 1
+        }
     });
 }

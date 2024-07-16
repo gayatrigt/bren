@@ -5,6 +5,7 @@ import { stack } from "~/server/stack";
 
 export async function setUserAllowance(fid: number, walletAddress: string, userType: UserType): Promise<void> {
     try {
+        console.log("🚀 ~ setUserAllowance ~ userType:", userType)
 
         // Determine allowance points based on user type
         let allowancePoints: number;

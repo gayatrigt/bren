@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { SERVER_HOST } from "~/utils/constants";
 
 interface WebhookResponse {
     created_at: number;
@@ -45,8 +46,8 @@ interface WebhookResponse {
     };
 }
 
-const INVITE_WEBHOOK_URL = process.env.INVITE_WEBHOOK_URL || 'https://bren.vercel.app/api/process-invitewebhook';
-const TIP_WEBHOOK_URL = process.env.TIP_WEBHOOK_URL || 'https://bren.vercel.app/api/process-webhook';
+const INVITE_WEBHOOK_URL = process.env.INVITE_WEBHOOK_URL || SERVER_HOST + '/api/process-invitewebhook';
+const TIP_WEBHOOK_URL = process.env.TIP_WEBHOOK_URL || SERVER_HOST + '/api/process-webhook';
 
 async function callWebhook(url: string, hash: string) {
     try {
