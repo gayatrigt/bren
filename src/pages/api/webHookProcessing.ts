@@ -249,13 +249,15 @@ const getUserAllowance = async (wallet: string): Promise<number> => {
 }
 
 async function getRecipientFid(neynarCast: Cast): Promise<number> {
+
     // First, check for parent author
-    if (neynarCast.parent_author) {
+    if (neynarCast.parent_author?.fid) {
         return neynarCast.parent_author.fid;
     }
 
-    // If no parent author, check mentioned profiles
+
     if (!!neynarCast.mentioned_profiles.length) {
+        // If no parent author, check mentioned profiles
         const profiles = neynarCast.mentioned_profiles.filter(p => p.fid !== 670648)
 
         if (!!profiles[0]?.fid) {

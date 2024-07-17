@@ -1,81 +1,72 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    // provider = "postgresql"
-    // // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // // Further reading:
-    // // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    // url      = env("DATABASE_URL")
-    provider  = "postgresql"
-    url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-    directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
-    walletAddress    String        @id
-    fid              Int           @unique
-    display_name     String?
-    username         String?
-    pfp              String?
-    isAllowanceGiven Boolean?
-    allowanceGivenAt DateTime?     @default(now())
-    type             UserType?
-    sentTransactions Transaction[] @relation("FromUser")
+  walletAddress    String        @id
+  fid              Int           @unique
+  display_name     String?
+  username         String?
+  pfp              String?
+  isAllowanceGiven Boolean?
+  allowanceGivenAt DateTime?     @default(now())
+  type             UserType?
+  sentTransactions Transaction[] @relation("FromUser")
 }
 
 model UserRankings {
-    fid               Int    @id
-    walletAddress     String @unique
-    tipsReceived      Float? @default(0)
-    tipsSent          Float? @default(0)
-    tipsReceivedCount Int?   @default(0)
-    tipsSentCount     Int?   @default(0)
+  fid               Int    @id
+  walletAddress     String @unique
+  tipsReceived      Float? @default(0)
+  tipsSent          Float? @default(0)
+  tipsReceivedCount Int?   @default(0)
+  tipsSentCount     Int?   @default(0)
 }
 
 model Transaction {
-    castHash       String   @id
-    fromAddress    String
-    fromUser       User     @relation("FromUser", fields: [fromAddress], references: [walletAddress])
-    fromUsername   String
-    fromFid        Int
-    toAddress      String?
-    toUsername     String
-    toFid          Int
-    text           String
-    value          String
-    link           String
-    parentCastHash String?
-    amount         Float
-    createdAt      DateTime @default(now())
+  castHash       String   @id
+  fromAddress    String
+  fromUsername   String
+  toAddress      String?
+  toUsername     String
+  toFid          Int
+  text           String
+  link           String
+  parentCastHash String?
+  amount         Float
+  createdAt      DateTime @default(now())
+  fromFid        Int
+  value          String
+  fromUser       User     @relation("FromUser", fields: [fromAddress], references: [walletAddress])
 }
 
 model Invite {
-    id                   String   @id @default(uuid())
-    inviteeFid           Int
-    inviteeWalletAddress String?
-    inviteePfp           String
-    invitorFid           Int
-    invitorAddress       String?
-    createdAt            DateTime @default(now())
-    castHash             String
+  id                   String   @id @default(uuid())
+  inviteeFid           Int
+  inviteeWalletAddress String?
+  invitorFid           Int
+  invitorAddress       String?
+  createdAt            DateTime @default(now())
+  inviteePfp           String
+  castHash             String
 }
 
 model BotReply {
-    botcastHash  String   @unique
-    userCastHash String   @unique
-    repliedAt    DateTime @default(now())
+  repliedAt    DateTime @default(now())
+  botcastHash  String   @unique
+  userCastHash String   @unique
 }
 
 enum UserType {
-    POWER_BADGE
-    ALLIES
-    SPLITTERS
-    INVITED
-    FOLLOWER
+  POWER_BADGE
+  ALLIES
+  SPLITTERS
+  INVITED
+  FOLLOWER
 }
