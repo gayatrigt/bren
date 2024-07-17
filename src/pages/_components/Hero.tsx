@@ -1,6 +1,5 @@
-import React from "react";
-import Nav from "./Nav";
 import Image from "next/image";
+import Nav from "./Nav";
 
 const Hero = () => {
   const mindsetList = [
