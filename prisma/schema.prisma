@@ -18,26 +18,64 @@ datasource db {
 }
 
 model User {
-    walletAddress String @id
-    fid           Int
-    display_name  String
-    username      String
-    pfp           String
-    isAllowanceGiven Boolean
-    allowanceGivenAt      DateTime @default(now())
- }
+    walletAddress    String        @id
+    fid              Int           @unique
+    display_name     String?
+    username         String?
+    pfp              String?
+    isAllowanceGiven Boolean?
+    allowanceGivenAt DateTime?     @default(now())
+    type             UserType?
+    sentTransactions Transaction[] @relation("FromUser")
+}
+
+model UserRankings {
+    fid               Int    @id
+    walletAddress     String @unique
+    tipsReceived      Float? @default(0)
+    tipsSent          Float? @default(0)
+    tipsReceivedCount Int?   @default(0)
+    tipsSentCount     Int?   @default(0)
+}
 
 model Transaction {
     castHash       String   @id
-    fromAddress    String?
-    fromUsername   String?
+    fromAddress    String
+    fromUser       User     @relation("FromUser", fields: [fromAddress], references: [walletAddress])
+    fromUsername   String
+    fromFid        Int
     toAddress      String?
-    fromFid        Int?
-    toUsername     String?
-    toFid          Int?
+    toUsername     String
+    toFid          Int
     text           String
+    value          String
     link           String
     parentCastHash String?
     amount         Float
     createdAt      DateTime @default(now())
+}
+
+model Invite {
+    id                   String   @id @default(uuid())
+    inviteeFid           Int
+    inviteeWalletAddress String?
+    inviteePfp           String
+    invitorFid           Int
+    invitorAddress       String?
+    createdAt            DateTime @default(now())
+    castHash             String
+}
+
+model BotReply {
+    botcastHash  String   @unique
+    userCastHash String   @unique
+    repliedAt    DateTime @default(now())
+}
+
+enum UserType {
+    POWER_BADGE
+    ALLIES
+    SPLITTERS
+    INVITED
+    FOLLOWER
 }
