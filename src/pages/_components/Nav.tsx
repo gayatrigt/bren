@@ -1,8 +1,16 @@
+import { useConnectModal, useAccountModal, useChainModal } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { walletFormat } from "~/utils/walletFormat";
 
 const Nav = () => {
+  const { openConnectModal } = useConnectModal();
+  const { openAccountModal } = useAccountModal();
+  const data = useAccount()
+
+
   const Navlinks = [
     { title: "about", link: "#" },
     { title: "leaderboard", link: "#" },
@@ -65,9 +73,23 @@ const Nav = () => {
             ))}
           </div>
 
-          <button className="mt-auto flex-shrink-0 rounded-[10px] border-[1.5px] border-B-100 bg-white py-[13px]">
-            <span className="text-sm font-medium">0xabcdef...uwvxyz</span>
+        {
+          !data.address &&
+          <button
+            onClick={openConnectModal}
+            className="w-[200px] rounded-[10px] border-[1.5px] border-pu-100 px-6 py-[13px] text-xl font-medium text-pu-100">
+            Connect Wallet
           </button>
+        }
+
+        {
+          !!data.address &&
+          <button
+            onClick={openAccountModal}
+            className="w-[200px] rounded-[10px] border-[1.5px] border-pu-100 px-6 py-[13px] text-xl font-medium text-pu-100">
+            {walletFormat(data.address)}
+          </button>
+        }
         </div>
       </div>
     </nav>

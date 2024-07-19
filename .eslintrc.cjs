@@ -27,6 +27,11 @@ const config = {
     "@typescript-eslint/no-floating-promises": "warn",
     "@typescript-eslint/restrict-plus-operands": "warn",
     "@typescript-eslint/no-unsafe-return": "warn",
+    "@typescript-eslint/prefer-optional-chain": "warn",
+    "@typescript-eslint/prefer-nullish-coalescing": "warn",
+    "@typescript-eslint/no-redundant-type-constituents": "warn",
+    "@typescript-eslint/restrict-template-expressions": "warn",
+    "@typescript-eslint/consistent-indexed-object-style": "warn",
     "@typescript-eslint/consistent-type-imports": [
       "warn",
       {
