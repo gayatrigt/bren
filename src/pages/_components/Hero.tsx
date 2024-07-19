@@ -57,9 +57,9 @@ const Hero = () => {
             mindset
           </p>
           <div className="grid gap-5 lg:grid-cols-[380px_1fr] lg:gap-12">
-            <div className=" flex h-[380px] w-full items-center justify-center rounded-xl bg-pu-100">
-              <div className="relative h-[360px] w-[360px]">
-                <Image layout="fill" src="/icons/tweet_1.png" alt="Tweet" />
+            <div className=" flex w-full items-center justify-center rounded-xl bg-pu-100">
+              <div className="relative h-auto w-[360px]">
+                <img src="/icons/tweet_1.png" alt="Tweet" className="object-contain" />
               </div>
             </div>
             <div className="space-y-3 lg:space-y-5">
