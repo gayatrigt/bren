@@ -1,8 +1,19 @@
+import {
+  useConnectModal,
+  useAccountModal,
+  useChainModal,
+} from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { walletFormat } from "~/utils/walletFormat";
 
 const Nav = () => {
+  const { openConnectModal } = useConnectModal();
+  const { openAccountModal } = useAccountModal();
+  const data = useAccount();
+
   const Navlinks = [
     { title: "about", link: "#" },
     { title: "leaderboard", link: "#" },
@@ -54,7 +65,7 @@ const Nav = () => {
             width={24}
             height={24}
             className="cursor-pointer"
-            onClick={() => {}}
+            // onClick={() => {}}
           />
         </div>
 
