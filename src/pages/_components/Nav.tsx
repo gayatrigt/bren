@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 
 const Nav = () => {
   const Navlinks = [
@@ -9,6 +9,8 @@ const Nav = () => {
     { title: "my profile", link: "#" },
     { title: "faqs", link: "#" },
   ];
+
+  const [showMenu, setShowMenu] = useState(false);
   return (
     <nav className="relative">
       <div className="fixed left-0 right-0 top-0 z-30 w-full backdrop-blur-[12px]">
