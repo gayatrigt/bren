@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { cn } from "~/utils/helpers";
 import { walletFormat } from "~/utils/walletFormat";
+import classNames from 'classnames';  // Make sure to import classnames library
 
 const Nav = () => {
   const { openConnectModal } = useConnectModal();
@@ -20,10 +21,29 @@ const Nav = () => {
   const Navlinks = [
     { title: "about", link: "/" },
     { title: "leaderboard", link: "/leaderboard" },
-    { title: "my profile", link: "/profile" },
     { title: "faqs", link: "/faqs" },
   ];
+
+  // Add "my profile" link only when user is connected
+  if (data.address) {
+    Navlinks.splice(2, 0, { title: "my profile", link: "/profile" });
+  }
+
   const [showMenu, setShowMenu] = useState(false);
+
+  // ... in your component
+  const isMobile = useMediaQuery('(max-width: 640px)');  // You'll need to implement this hook
+
+  const buttonClasses = classNames({
+    'w-40 py-2 text-base -mr-20': isMobile,  // Mobile classes
+    'w-[200px] py-[13px] px-6 text-lg': !isMobile,  // Desktop classes
+    'rounded-[10px] border-[1.5px] border-pu-100 font-medium text-pu-100': true,  // Common classes
+  });
+
+  const walletFormat = (address: string, chars = 6) => {
+    return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+  };
+
   return (
     <nav className="relative">
       <div className="fixed left-0 right-0 top-0 z-30 w-full backdrop-blur-[12px]">
@@ -47,9 +67,22 @@ const Nav = () => {
               ))}
             </div>
 
-            <button className="hidden w-[200px] rounded-[10px] border-[1.5px] border-pu-100 px-6 py-[13px] text-xl font-medium text-pu-100 lg:block">
-              Connect Wallet
-            </button>
+            {
+              !data.address &&
+              <button
+                onClick={openConnectModal}
+                className={buttonClasses}                >
+                Connect Wallet
+              </button>
+            }
+            {
+              !!data.address &&
+              <button
+                onClick={openAccountModal}
+                className={buttonClasses}                >
+                {walletFormat(data.address)}
+              </button>
+            }
 
             <Image
               src="/icons/hamburger.svg"
@@ -93,10 +126,6 @@ const Nav = () => {
                 </Link>
               ))}
             </div>
-
-            <button className="mt-auto flex-shrink-0 rounded-[10px] border-[1.5px] border-B-100 bg-white py-[13px]">
-              <span className="text-sm font-medium">0xabcdef...uwvxyz</span>
-            </button>
           </div>
         </div>
       )}
@@ -105,3 +134,20 @@ const Nav = () => {
 };
 
 export default Nav;
+
+
+function useMediaQuery(query: any) {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addListener(listener);
+    return () => media.removeListener(listener);
+  }, [matches, query]);
+
+  return matches;
+}

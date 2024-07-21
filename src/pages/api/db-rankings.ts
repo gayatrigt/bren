@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client'
 type SortField = 'tipsReceived' | 'tipsSent' | 'tipsReceivedCount' | 'tipsSentCount'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const { sort, page = '1', limit = '10' } = req.query
+    const { sort, page, limit } = req.query
 
     const pageNumber = parseInt(page as string, 10)
     const limitNumber = parseInt(limit as string, 10)

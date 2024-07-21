@@ -1,9 +1,9 @@
 import { type AppType } from "next/app";
 import "~/styles/font.css";
 import "~/styles/globals.css";
-import Layout from "./_components/layout";
 import "@rainbow-me/rainbowkit/styles.css";
 import { RainbowWalletProvider } from "~/utils/rainbowConfig";
+import Layout from "~/components/layout";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
@@ -16,3 +16,5 @@ const MyApp: AppType = ({ Component, pageProps }) => {
 };
 
 export default MyApp;
+
+
