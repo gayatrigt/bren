@@ -53,13 +53,13 @@ const SectionOne = () => {
               <p className="mb-2 text-[40px] font-bold text-[#FFFFFF66] lg:hidden">
                 {reward?.number}
               </p>
-              <p className="text-base font-bold leading-tight text-white lg:mt-6 lg:text-[32px]">
+              <p className="text-lg font-bold leading-tight text-white lg:mt-6 lg:text-[32px]">
                 <span className="hidden lg:inline-block">
                   {reward?.number}.
                 </span>{" "}
                 {reward?.title}
               </p>
-              <p className="mt-1 text-xs leading-tight text-white lg:mt-3 lg:text-[26px]">
+              <p className="mt-1 text-sm leading-tight text-white lg:mt-3 lg:text-[26px]">
                 {reward?.text}
               </p>
             </div>

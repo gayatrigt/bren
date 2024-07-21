@@ -88,4 +88,36 @@ body {
     background-size: 95% 100%;
     z-index: 1;
   }
+
+  .hero-section::before {
+    position: absolute;
+    background: url("/icons/hero-globe.svg");
+    height: 400px;
+    bottom: 0;
+    content: "";
+    width: 100%;
+    background-size: 97% 100%;
+    background-repeat: no-repeat;
+  }
+}
+
+.nav-link::after,
+.nav-link:hover::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background-color: #2b0035;
+  transition: width 0.3s ease-in-out;
+}
+
+.nav-link:hover::after,
+.nav-link.active-link::after {
+  width: 100%;
+}
+
+.hero-section::before {
+  position: absolute;
 }

@@ -13,24 +13,24 @@ interface RankingData {
 }
 
 export interface ApiResponse {
-  data: Rankings[]
-  pagination: Pagination
+  data: Rankings[];
+  pagination: Pagination;
 }
 
 export interface Rankings {
-  fid: number
-  walletAddress: string
-  tipsReceived: number
-  tipsSent: number
-  tipsReceivedCount: number
-  tipsSentCount: number
+  fid: number;
+  walletAddress: string;
+  tipsReceived: number;
+  tipsSent: number;
+  tipsReceivedCount: number;
+  tipsSentCount: number;
 }
 
 export interface Pagination {
-  currentPage: number
-  totalPages: number
-  totalItems: number
-  itemsPerPage: number
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
 }
 
 interface User {
@@ -44,12 +44,19 @@ interface EnrichedRankingData extends RankingData {
   userDetails?: User;
 }
 
-
 const SectionTwo = () => {
   const tabs = [
-    { title: "Top Bren Recipients", key: "tipsReceived", header: "BREN Earned" },
+    {
+      title: "Top Bren Recipients",
+      key: "tipsReceived",
+      header: "BREN Earned",
+    },
     { title: "Top Bren Givers", key: "tipsSent", header: "BREN Given" },
-    { title: "Top Shoutout Recipients", key: "tipsReceivedCount", header: "Shoutouts" },
+    {
+      title: "Top Shoutout Recipients",
+      key: "tipsReceivedCount",
+      header: "Shoutouts",
+    },
     { title: "Top Shoutout Givers", key: "tipsSentCount", header: "Shoutouts" },
   ];
 
@@ -62,29 +69,31 @@ const SectionTwo = () => {
       setLoading(true);
       try {
         // Fetch rankings
-        const response = await fetch(`/api/db-rankings?sort=${selectedTab?.key}&page=1&limit=10`);
+        const response = await fetch(
+          `/api/db-rankings?sort=${selectedTab?.key}&page=1&limit=10`,
+        );
         if (!response.ok) {
-          throw new Error('Failed to fetch rankings');
+          throw new Error("Failed to fetch rankings");
         }
         const data: ApiResponse = await response.json();
 
         // Fetch user details
-        const fids = data.data.map(ranking => ranking.fid).join(',');
+        const fids = data.data.map((ranking) => ranking.fid).join(",");
         const userResponse = await fetch(`/api/neynar-users?fids=${fids}`);
         if (!userResponse.ok) {
-          throw new Error('Failed to fetch user details');
+          throw new Error("Failed to fetch user details");
         }
         const userData: { users: User[] } = await userResponse.json();
 
         // Combine ranking data with user details
-        const enrichedRankings = data.data.map(ranking => ({
+        const enrichedRankings = data.data.map((ranking) => ({
           ...ranking,
-          userDetails: userData.users.find(user => user.fid === ranking.fid)
+          userDetails: userData.users.find((user) => user.fid === ranking.fid),
         }));
 
         setRankings(enrichedRankings);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
@@ -93,13 +102,12 @@ const SectionTwo = () => {
     fetchRankings();
   }, [selectedTab]);
 
-
   return (
     <section className="bg-G-100 px-5 py-8 lg:px-10 lg:py-20">
       <h1 className="mb-1 text-center text-xl font-bold text-white lg:text-[40px]">
         Top Ten Brens
       </h1>
-      <p className="mx-auto max-w-[600px] text-center text-xs text-white lg:text-2xl">
+      <p className="mx-auto max-w-[600px] text-center text-sm text-white lg:text-2xl">
         Climb the ranks of Based recognition. The Bren <br />
         leaderboard showcases not only Bren recipients, <br />
         but also top performers in various categories.
@@ -130,18 +138,19 @@ const SectionTwo = () => {
 
         <div className="divide-y-[0.5px] divide-B-40">
           {loading ? (
-            <div className="text-center py-4">Loading...</div>
+            <div className="py-4 text-center">Loading...</div>
           ) : (
             rankings.map((ranking, index) => (
               <div
-                className="grid w-full items-center grid-cols-[40px_60px_1fr_90px] gap-4 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
+                className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
                 key={ranking.fid}
               >
                 <h1 className="text-center text-xs text-B-60 lg:text-lg">
-                  {String(index + 1).padStart(2, '0')}
+                  {String(index + 1).padStart(2, "0")}
                 </h1>
                 <div className="w-full">
-                  <a href={`https://warpcast.com/${ranking.userDetails?.username || ''}`}
+                  <a
+                    href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex justify-center"
@@ -150,7 +159,7 @@ const SectionTwo = () => {
                       <img
                         alt="Profile"
                         src={ranking.userDetails.pfp_url}
-                        className="rounded-full h-8 w-8"
+                        className="h-8 w-8 rounded-full"
                       />
                     ) : (
                       <Image
@@ -169,11 +178,14 @@ const SectionTwo = () => {
                       layout="fill"
                     />
                   </div>
-                  <a href={`https://warpcast.com/${ranking.userDetails?.username || ''}`}
+                  <a
+                    href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-B-60 lg:text-lg">
-                    {ranking.userDetails?.username || `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
+                    className="text-xs text-B-60 lg:text-lg"
+                  >
+                    {ranking.userDetails?.username ||
+                      `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
                   </a>
                 </div>
 
