@@ -125,7 +125,7 @@ const LeaderboardListing: React.FC = () => {
   const halfVisiblePages = Math.floor(maxVisiblePages / 2);
 
   let startPage = Math.max(currentPage - halfVisiblePages, 1);
-  let endPage = Math.min(startPage + maxVisiblePages - 1, pagination.totalPages);
+  const endPage = Math.min(startPage + maxVisiblePages - 1, pagination.totalPages);
 
   if (endPage - startPage + 1 < maxVisiblePages) {
     startPage = Math.max(endPage - maxVisiblePages + 1, 1);
@@ -222,7 +222,7 @@ const LeaderboardListing: React.FC = () => {
                     </a>
                   </div>
                   <p className="text-center text-xs text-B-60 lg:text-base">
-                    {userRanking[selectedTab?.key as keyof RankingData] || 0}
+                    {userRanking[selectedTab?.key as keyof UserRank] as number || 0}
                   </p>
                 </div>
               )}
@@ -277,7 +277,7 @@ const LeaderboardListing: React.FC = () => {
                       </a>
                     </div>
                     <p className="text-center text-xs text-B-60 lg:text-base">
-                      {ranking[selectedTab?.key as keyof RankingData] || 0}
+                      {ranking[selectedTab?.key as keyof EnrichedRankingData] as number || 0}
                     </p>
                   </div>
                 );
