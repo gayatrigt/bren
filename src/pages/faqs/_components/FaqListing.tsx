@@ -1,8 +1,8 @@
-import Image from "next/image";
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 
-const FAQListing = ({
+const FaqListing = ({
   question,
   answer,
 }: {
@@ -10,18 +10,21 @@ const FAQListing = ({
   answer: string;
 }) => {
   const [showAnswer, setShowAnswer] = useState(false);
+
   return (
-    <div className="p-2 lg:p-6">
+    <div className="p-3 lg:p-6">
       <div
         className="flex cursor-pointer items-center justify-between gap-2"
         onClick={() => setShowAnswer(!showAnswer)}
       >
-        <h1 className="text-sm font-bold text-W-100 lg:text-xl">{question}</h1>
+        <h1 className="text-base font-bold text-B-100 lg:text-xl">
+          {question}
+        </h1>
 
         <Image
           height={24}
           width={24}
-          src="/icons/caret-down-white.svg"
+          src="/icons/caret-down-black.svg"
           alt="Caret"
         />
       </div>
@@ -33,7 +36,7 @@ const FAQListing = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -3 }}
             transition={{ type: "easeOut" }}
-            className="mt-1 text-[10px] text-W-100 lg:mt-2 lg:text-base"
+            className="mt-1 text-sm text-B-100 lg:mt-2 lg:text-base"
           >
             {answer}
           </motion.p>
@@ -43,4 +46,4 @@ const FAQListing = ({
   );
 };
 
-export default FAQListing;
+export default FaqListing;

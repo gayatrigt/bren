@@ -10,6 +10,7 @@ export default {
       },
       colors: {
         B: {
+          12: "#DCDCDC",
           40: "#A09FA0",
           60: "#707070",
           100: "#111011",

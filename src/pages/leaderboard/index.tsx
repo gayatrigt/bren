@@ -1,6 +1,7 @@
 import Head from "next/head";
 import React from "react";
 import LeaderboardHero from "./_components/LeaderboardHero";
+import LeaderboardListing from "./_components/LeaderboardListing";
 
 const LeaderboardPage = () => {
   return (
@@ -14,6 +15,7 @@ const LeaderboardPage = () => {
       </Head>
       <div>
         <LeaderboardHero />
+        <LeaderboardListing />
       </div>
     </>
   );

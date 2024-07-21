@@ -20,8 +20,8 @@ const Nav = () => {
   const Navlinks = [
     { title: "about", link: "/" },
     { title: "leaderboard", link: "/leaderboard" },
-    { title: "my profile", link: "#" },
-    { title: "faqs", link: "#" },
+    { title: "my profile", link: "/profile" },
+    { title: "faqs", link: "/faqs" },
   ];
   const [showMenu, setShowMenu] = useState(false);
   return (
@@ -87,6 +87,7 @@ const Nav = () => {
                   href={link?.link}
                   key={link?.title}
                   className="text-pu-100"
+                  onClick={() => setShowMenu(false)}
                 >
                   {link?.title}
                 </Link>

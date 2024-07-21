@@ -33,14 +33,14 @@ export interface Pagination {
   itemsPerPage: number;
 }
 
-interface User {
+export interface User {
   fid: number;
   username: string;
   display_name: string;
   pfp_url: string;
 }
 
-interface EnrichedRankingData extends RankingData {
+export interface EnrichedRankingData extends RankingData {
   userDetails?: User;
 }
 
