@@ -297,16 +297,18 @@ const SectionTwo = () => {
       </div>
 
       <div className="mt-6 lg:mt-12">
-        <button className="bg mx-auto flex items-center gap-2 rounded-md bg-B-100 p-3 lg:rounded-xl lg:p-6">
-          <p className="text-xs text-white lg:text-xl">View Leaderboard</p>
-          <div className="relative h-3 w-3 lg:h-6 lg:w-6">
-            <Image
-              src="/icons/white_arrow_left.svg"
-              alt="Arrow"
-              layout="fill"
-            />
-          </div>
-        </button>
+        <Link href="/leaderboard">
+          <button className="bg mx-auto flex items-center gap-2 rounded-md bg-B-100 p-3 lg:rounded-xl lg:p-6">
+            <p className="text-xs text-white lg:text-xl">View Leaderboard</p>
+            <div className="relative h-3 w-3 lg:h-6 lg:w-6">
+              <Image
+                src="/icons/white_arrow_left.svg"
+                alt="Arrow"
+                layout="fill"
+              />
+            </div>
+          </button>
+        </Link>
       </div>
     </section>
   );
