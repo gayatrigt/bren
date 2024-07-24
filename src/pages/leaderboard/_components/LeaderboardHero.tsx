@@ -10,7 +10,7 @@ const LeaderboardHero = () => {
           </h1>
 
           <p className="max-w-[660px] text-sm leading-tight text-pu-100 lg:text-[28px]">
-            Climb the ranks Based Recognition. The Bren leaderboard showcases
+            Climb the ranks of Based Recognition. The Bren leaderboard showcases
             not only Bren recipients but also top performers in various
             categories.
           </p>

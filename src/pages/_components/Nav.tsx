@@ -1,3 +1,4 @@
+"use client";
 import {
   useConnectModal,
   useAccountModal,
@@ -24,12 +25,36 @@ const Nav = () => {
     { title: "faqs", link: "/faqs" },
   ];
   const [showMenu, setShowMenu] = useState(false);
+
+  const openMenu = () => {
+    setShowMenu(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeMenu = () => {
+    setShowMenu(false);
+    document.body.style.overflow = "";
+  };
+
   return (
     <nav className="relative">
       <div className="fixed left-0 right-0 top-0 z-30 w-full backdrop-blur-[12px]">
         <nav className="mx-auto w-full lg:max-w-[1600px]">
           <div className="flex items-center justify-between px-5 pb-2 pt-5 lg:px-[60px] lg:pt-10">
-            <Image width={90} height={30} src="/icons/logo.svg" alt="Bren" />
+            <div className="flex items-center gap-3">
+              <Image
+                src="/icons/hamburger.svg"
+                alt="Menu"
+                width={20}
+                height={13}
+                className="block cursor-pointer lg:hidden"
+                onClick={openMenu}
+              />
+
+              <div className="relative h-[24px] w-[60px] lg:h-[30px] lg:w-[90px] ">
+                <Image layout="fill" src="/icons/logo.svg" alt="Bren" />
+              </div>
+            </div>
             <div className="hidden space-x-4 lg:block">
               {Navlinks?.map((link) => (
                 <Link
@@ -51,20 +76,15 @@ const Nav = () => {
               Connect Wallet
             </button>
 
-            <Image
-              src="/icons/hamburger.svg"
-              alt="Menu"
-              width={24}
-              height={24}
-              className="block cursor-pointer lg:hidden"
-              onClick={() => setShowMenu(true)}
-            />
+            <button className="w-[105px] rounded-[6px] border-[1.5px] border-pu-100 py-[6px] text-xs font-medium text-pu-100 lg:hidden">
+              Connect Wallet
+            </button>
           </div>
         </nav>
       </div>
 
       {showMenu && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 flex h-screen w-full flex-col bg-white pb-14 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex h-screen w-full flex-col bg-white pb-14 lg:hidden">
           <div className="flex items-center justify-between bg-Y-100 px-5 pb-12 pt-[54px]">
             <h1 className="text-2xl text-pu-100">Menu</h1>
 
@@ -74,9 +94,7 @@ const Nav = () => {
               width={24}
               height={24}
               className="cursor-pointer"
-              onClick={() => {
-                setShowMenu(false);
-              }}
+              onClick={closeMenu}
             />
           </div>
 
@@ -87,7 +105,7 @@ const Nav = () => {
                   href={link?.link}
                   key={link?.title}
                   className="text-pu-100"
-                  onClick={() => setShowMenu(false)}
+                  onClick={closeMenu}
                 >
                   {link?.title}
                 </Link>

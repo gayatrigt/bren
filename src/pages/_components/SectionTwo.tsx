@@ -112,6 +112,23 @@ const SectionTwo = () => {
         leaderboard showcases not only Bren recipients, <br />
         but also top performers in various categories.
       </p>
+
+      <div className=" mx-auto mt-3 w-full max-w-[180px] lg:hidden">
+        <select
+          value={selectedTab?.key}
+          className="w-full rounded-lg bg-[rgba(44,149,105,0.72)] px-2 py-2 text-sm font-medium text-[#FFFC00]"
+          onChange={(e) => {
+            const newkey = e.target.value;
+            setSelectedTab(tabs?.find((t) => t?.key === newkey));
+          }}
+        >
+          {tabs?.map((tab) => (
+            <option className="" key={tab?.key} value={tab?.key}>
+              {tab?.title}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="mx-auto mt-12 hidden w-full max-w-[980px] items-center justify-between rounded-[14px] bg-[rgba(17,16,17,0.16)] px-5 lg:flex">
         {tabs.map((tab) => (
           <div
@@ -170,7 +187,7 @@ const SectionTwo = () => {
                     )}
                   </a>
                 </div>
-                <div className="flex w-full items-center gap-2">
+                <div className="flex w-full items-center gap-2 overflow-hidden">
                   <div className="relative h-[14px] w-[14px] lg:h-[22px] lg:w-[22px]">
                     <Image
                       src="/icons/bolt_circle.svg"
@@ -182,7 +199,7 @@ const SectionTwo = () => {
                     href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-B-60 lg:text-lg"
+                    className="truncate text-xs text-B-60 lg:text-lg"
                   >
                     {ranking.userDetails?.username ||
                       `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
