@@ -154,7 +154,7 @@ const SectionTwo = () => {
         leaderboard showcases not only Bren recipients, <br />
         but also top performers in various categories.
       </p>
-      <div className="mx-auto mt-12 w-full max-w-[980px] items-center justify-between rounded-[14px] bg-[rgba(17,16,17,0.16)] px-5 lg:flex">
+      <div className="mx-auto hidden mt-12 w-full max-w-[980px] items-center justify-between rounded-[14px] bg-[rgba(17,16,17,0.16)] px-5 lg:flex">
         {tabs.map((tab) => (
           <div
             key={tab.key}
@@ -169,6 +169,22 @@ const SectionTwo = () => {
             {tab.title}
           </div>
         ))}
+      </div>
+      <div className="mx-auto w-full max-w-[200px] mt-6 lg:hidden">
+        <select
+          value={selectedTab?.key}
+          className="w-full rounded-lg bg-[#31AE7A] text-sm font-medium text-[#FFFC00]"
+          onChange={(e) => {
+            const newkey = e.target.value;
+            setSelectedTab(tabs?.find((t) => t?.key === newkey));
+          }}
+        >
+          {tabs?.map((tab) => (
+            <option key={tab?.key} value={tab?.key}>
+              {tab?.title}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="mx-auto mt-6 w-full max-w-[1024px] rounded-xl border border-B-40 bg-white">
         <div className="grid w-full grid-cols-[40px_60px_1fr_90px] gap-4 border-b-[0.5px] border-B-40 px-3 py-2.5 text-xs font-bold text-B-100 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5 lg:text-xl">

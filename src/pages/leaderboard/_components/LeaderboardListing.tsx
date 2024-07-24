@@ -155,12 +155,10 @@ const LeaderboardListing: React.FC = () => {
           </div>
         ))}
       </div>
-
       <p className="my-5 text-sm font-medium text-B-40 lg:my-8 lg:text-[22px]">
         Highest amount of points distributed by Brens.
       </p>
-
-      <div className="mx-auto w-full max-w-[200px] lg:hidden">
+      <div className="mx-auto w-full max-w-[240px] mt-6 lg:hidden">
         <select
           value={selectedTab?.key}
           className="w-full rounded-lg bg-[#31AE7A] px-2 py-2 text-sm font-medium text-[#FFFC00]"
@@ -170,13 +168,12 @@ const LeaderboardListing: React.FC = () => {
           }}
         >
           {tabs?.map((tab) => (
-            <option className="" key={tab?.key} value={tab?.key}>
+            <option key={tab?.key} value={tab?.key}>
               {tab?.title}
             </option>
           ))}
         </select>
       </div>
-
       <div className="mx-auto mt-6 w-full rounded-xl border border-B-40 bg-white">
         <div className="grid w-full grid-cols-[40px_60px_1fr_90px] gap-4 border-b-[0.5px] border-B-40 px-3 py-2.5 text-xs font-bold text-B-100 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5 lg:text-xl">
           <h1>Rank</h1>

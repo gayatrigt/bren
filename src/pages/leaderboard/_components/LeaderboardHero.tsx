@@ -8,7 +8,6 @@ const LeaderboardHero = () => {
           <h1 className="mb-3 text-2xl font-bold text-pu-100 lg:mb-8 lg:text-[60px]">
             Leaderboard
           </h1>
-
           <p className="max-w-[660px] text-sm leading-tight text-pu-100 lg:text-[28px]">
             Climb the ranks of Based Recognition. The Bren leaderboard showcases
             not only Bren recipients but also top performers in various
