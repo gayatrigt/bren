@@ -2,11 +2,10 @@ import { Transaction } from "@prisma/client";
 import { NextPage } from "next";
 import Head from "next/head";
 import { useSearchParams } from "next/navigation";
-import Hero from "./_components/Hero";
-import SectionOne from "./_components/SectionOne";
-import SectionTwo from "./_components/SectionTwo";
-import SectionThree from "./_components/SectionThree";
-import Footer from "./_components/Footer";
+import Hero from "~/components/Hero";
+import SectionOne from "~/components/SectionOne";
+import SectionThree from "~/components/SectionThree";
+import SectionTwo from "~/components/SectionTwo";
 
 const Home: NextPage<{ transactions: Transaction[] }> = (props) => {
   const queryParams = useSearchParams();

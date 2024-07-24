@@ -8,6 +8,8 @@ import { checkWhitelist } from "./functions/checkWhiteList";
 import { botReply } from "./functions/botReply";
 import { setUserAllowance } from "./functions/setAllowance";
 import { getStartOfWeek } from "./getUserStats";
+import { fids } from "./whitelist/fids";
+import { CheckEligibilityAPIResponse } from "./whitelist/fbi-token";
 
 export async function processWebhookData(hash: string) {
     console.log('processWebhookData started');
@@ -119,15 +121,85 @@ export async function processWebhookData(hash: string) {
                 neynarCast
             );
 
-        } else {
+        }
+
+        // {
+        //     console.log('New user detected');
+        //     // Perform actions for new user, e.g., create a new user record
+
+        //     const isPowerBadge = neynarCast.author.power_badge
+
+        //     const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
+
+        //     if (result === 'NOT_WHITELISTED') {
+        //         console.log('User is not whitelisted');
+
+        //         const result = await botReply(
+        //             castHash,
+        //             `Hey ${fromUsername}! You are not eligible to tip $bren`,
+        //             `Your tip failed as you are not eligible`
+        //         );
+
+        //         if (result.success) {
+        //             console.log('Reply posted successfully:', result.castHash);
+        //         } else {
+        //             console.error('Failed to post reply:', result.message);
+        //         }
+
+        //     } else {
+        //         console.log(`User is whitelisted as ${result}`);
+
+        //         try {
+        //             const newUser = await db.user.create({
+        //                 data: {
+        //                     walletAddress: fromAddress,
+        //                     fid: fromFid,
+        //                     display_name: neynarCast.author.display_name,
+        //                     username: fromUsername,
+        //                     pfp: neynarCast.author.pfp_url,
+        //                     isAllowanceGiven: false,
+        //                     type: result
+        //                 },
+        //             });
+
+        //             console.log(`New user created successfully. FID: ${fromFid}`);
+
+        //         } catch (error) {
+        //             console.error(`Error creating new user. FID: ${fromFid}`, error);
+        //         }
+
+        //         try {
+        //             await setUserAllowance(fromFid, fromAddress, result);
+        //             console.log('Allowance set and database updated successfully');
+        //         } catch (error) {
+        //             console.error('Failed to set allowance:', error);
+        //         }
+
+        //         const currentAllowance = await getUserCurrentAllowance(fromAddress);
+
+        //         await processTip(
+        //             tipAmount,
+        //             currentAllowance,
+        //             fromFid,
+        //             fromAddress,
+        //             fromUsername,
+        //             toFid,
+        //             message,
+        //             hashtagValue,
+        //             castHash,
+        //             neynarCast
+        //         );
+
+        //     }
+        // }
+
+        else {
             console.log('New user detected');
             // Perform actions for new user, e.g., create a new user record
 
-            const isPowerBadge = neynarCast.author.power_badge
+            const result = await checkEligibility(fromFid);
 
-            const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
-
-            if (result === 'NOT_WHITELISTED') {
+            if (!result) {
                 console.log('User is not whitelisted');
 
                 const result = await botReply(
@@ -142,7 +214,7 @@ export async function processWebhookData(hash: string) {
                     console.error('Failed to post reply:', result.message);
                 }
 
-            } else {
+            } else if (result) {
                 console.log(`User is whitelisted as ${result}`);
 
                 try {
@@ -154,7 +226,7 @@ export async function processWebhookData(hash: string) {
                             username: fromUsername,
                             pfp: neynarCast.author.pfp_url,
                             isAllowanceGiven: false,
-                            type: result
+                            type: 'WHITELISTED'
                         },
                     });
 
@@ -165,7 +237,7 @@ export async function processWebhookData(hash: string) {
                 }
 
                 try {
-                    await setUserAllowance(fromFid, fromAddress, result);
+                    await setUserAllowance(fromFid, fromAddress, 'WHITELISTED');
                     console.log('Allowance set and database updated successfully');
                 } catch (error) {
                     console.error('Failed to set allowance:', error);
@@ -267,4 +339,36 @@ async function getRecipientFid(neynarCast: Cast): Promise<number> {
 
     // If we reach here, no valid recipient was found
     throw new Error('No valid recipient found: neither parent author nor suitable mentioned profiles');
+}
+
+async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
+    console.log('Checking eligibility for FID:', fromFid);
+
+    // First, check if the FID exists in the fids object
+    if (fromFid in fids) {
+        console.log('FID found in local database');
+        return true
+    }
+
+    console.log('FID not found in local database, checking whitelist API');
+
+    // If not in fids object, call the local API
+    try {
+        const response = await fetch(`http://localhost:3000/api/whitelist/fbi-token?fid=${fromFid}`);
+        const result: CheckEligibilityAPIResponse = await response.json();
+
+        if (result.data.TokenBalances?.TokenBalance === null) {
+            console.log('User is not whitelisted');
+            return false;
+        } else if (result.data.TokenBalances?.TokenBalance[0]?.tokenId === 1) {
+            console.log('User is whitelisted');
+            return true;
+        } else {
+            console.log('Unexpected result from whitelist API');
+            return undefined
+        }
+    } catch (error) {
+        console.error('Error checking whitelist:', error);
+        return undefined
+    }
 }

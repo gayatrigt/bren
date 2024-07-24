@@ -13,6 +13,9 @@ export async function setUserAllowance(fid: number, walletAddress: string, userT
             case UserType.ALLIES:
                 allowancePoints = 500;
                 break;
+            case UserType.WHITELISTED:
+                allowancePoints = 300;
+                break;
             case UserType.POWER_BADGE:
                 allowancePoints = 300;
                 break;

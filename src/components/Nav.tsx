@@ -1,4 +1,3 @@
-"use client";
 import {
   useConnectModal,
   useAccountModal,
@@ -11,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { cn } from "~/utils/helpers";
 import { walletFormat } from "~/utils/walletFormat";
+import classNames from 'classnames';  // Make sure to import classnames library
 
 const Nav = () => {
   const { openConnectModal } = useConnectModal();
@@ -21,40 +21,46 @@ const Nav = () => {
   const Navlinks = [
     { title: "about", link: "/" },
     { title: "leaderboard", link: "/leaderboard" },
-    { title: "my profile", link: "/profile" },
     { title: "faqs", link: "/faqs" },
   ];
+
+  // Add "my profile" link only when user is connected
+  if (data.address) {
+    Navlinks.splice(2, 0, { title: "my profile", link: "/profile" });
+  }
+
   const [showMenu, setShowMenu] = useState(false);
 
-  const openMenu = () => {
-    setShowMenu(true);
-    document.body.style.overflow = "hidden";
-  };
+  // ... in your component
+  const isMobile = useMediaQuery('(max-width: 640px)');  // You'll need to implement this hook
 
-  const closeMenu = () => {
-    setShowMenu(false);
-    document.body.style.overflow = "";
+  const buttonClasses = classNames({
+    'py-2 text-base px-2': isMobile,  // Mobile classes
+    'w-[200px] py-[13px] px-6 text-lg': !isMobile,  // Desktop classes
+    'rounded-[10px] border-[1.5px] border-pu-100 font-medium text-pu-100': true,  // Common classes
+  });
+
+  const walletFormat = (address: string, chars = 6) => {
+    return `${address.slice(0, chars)}...${address.slice(-chars)}`;
   };
 
   return (
     <nav className="relative">
       <div className="fixed left-0 right-0 top-0 z-30 w-full backdrop-blur-[12px]">
         <nav className="mx-auto w-full lg:max-w-[1600px]">
-          <div className="flex items-center justify-between px-5 pb-2 pt-5 lg:px-[60px] lg:pt-10">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between px-5 pb-2 pt-5 lg:px-[60px] lg:pt-10 max-w-full">
+            <div className="flex items-center space-x-2">
               <Image
                 src="/icons/hamburger.svg"
                 alt="Menu"
-                width={20}
-                height={13}
+                width={24}
+                height={24}
                 className="block cursor-pointer lg:hidden"
-                onClick={openMenu}
+                onClick={() => setShowMenu(true)}
               />
-
-              <div className="relative h-[24px] w-[60px] lg:h-[30px] lg:w-[90px] ">
-                <Image layout="fill" src="/icons/logo.svg" alt="Bren" />
-              </div>
+              <Image width={90} height={30} src="/icons/logo.svg" alt="Bren" />
             </div>
+
             <div className="hidden space-x-4 lg:block">
               {Navlinks?.map((link) => (
                 <Link
@@ -72,19 +78,29 @@ const Nav = () => {
               ))}
             </div>
 
-            <button className="hidden w-[200px] rounded-[10px] border-[1.5px] border-pu-100 px-6 py-[13px] text-xl font-medium text-pu-100 lg:block">
-              Connect Wallet
-            </button>
+            {
+              !data.address &&
+              <button
+                onClick={openConnectModal}
+                className={buttonClasses}                >
+                Connect Wallet
+              </button>
+            }
+            {
+              !!data.address &&
+              <button
+                onClick={openAccountModal}
+                className={buttonClasses}                >
+                {walletFormat(data.address)}
+              </button>
+            }
 
-            <button className="w-[105px] rounded-[6px] border-[1.5px] border-pu-100 py-[6px] text-xs font-medium text-pu-100 lg:hidden">
-              Connect Wallet
-            </button>
           </div>
         </nav>
       </div>
 
       {showMenu && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex h-screen w-full flex-col bg-white pb-14 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex h-screen w-full flex-col bg-white pb-14 lg:hidden">
           <div className="flex items-center justify-between bg-Y-100 px-5 pb-12 pt-[54px]">
             <h1 className="text-2xl text-pu-100">Menu</h1>
 
@@ -94,7 +110,9 @@ const Nav = () => {
               width={24}
               height={24}
               className="cursor-pointer"
-              onClick={closeMenu}
+              onClick={() => {
+                setShowMenu(false);
+              }}
             />
           </div>
 
@@ -105,16 +123,12 @@ const Nav = () => {
                   href={link?.link}
                   key={link?.title}
                   className="text-pu-100"
-                  onClick={closeMenu}
+                  onClick={() => setShowMenu(false)}
                 >
                   {link?.title}
                 </Link>
               ))}
             </div>
-
-            <button className="mt-auto flex-shrink-0 rounded-[10px] border-[1.5px] border-B-100 bg-white py-[13px]">
-              <span className="text-sm font-medium">0xabcdef...uwvxyz</span>
-            </button>
           </div>
         </div>
       )}
@@ -123,3 +137,20 @@ const Nav = () => {
 };
 
 export default Nav;
+
+
+function useMediaQuery(query: any) {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addListener(listener);
+    return () => media.removeListener(listener);
+  }, [matches, query]);
+
+  return matches;
+}

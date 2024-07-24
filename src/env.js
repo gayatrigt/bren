@@ -19,8 +19,10 @@ export const env = createEnv({
       .default("development"),
     NEYNAR_API_KEY: z.string(),
     STACK_API_KEY: z.string(),
+    BASE_URL: z.string(),
     STACK_POINT_SYSTEM_ID: z.string(),
-    DUNE_API_KEY: z.string()
+    DUNE_API_KEY: z.string(),
+    AIRSTACK_API_KEY: z.string()
     // DISCORD_CLIENT_ID: z.string(),
     // DISCORD_CLIENT_SECRET: z.string(),
   },
@@ -42,9 +44,11 @@ export const env = createEnv({
     POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL,
     NODE_ENV: process.env.NODE_ENV,
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
+    BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     STACK_API_KEY: process.env.STACK_API_KEY,
     STACK_POINT_SYSTEM_ID: process.env.STACK_POINT_SYSTEM_ID,
-    DUNE_API_KEY: process.env.DUNE_API_KEY
+    DUNE_API_KEY: process.env.DUNE_API_KEY,
+    AIRSTACK_API_KEY: process.env.AIRSTACK_API_KEY
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
