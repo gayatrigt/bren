@@ -26,7 +26,7 @@ export interface Rankings {
   tipsSent: number;
   tipsReceivedCount: number;
   tipsSentCount: number;
-  rank: number
+  rank: number;
 }
 
 export interface Pagination {
@@ -45,18 +45,18 @@ export interface User {
 
 export interface EnrichedRankingData extends RankingData {
   userDetails?: User;
-  rank?: number
+  rank?: number;
 }
 
 export interface UserRank {
-  fid: number
-  walletAddress: string
-  tipsReceived: number
-  tipsSent: number
-  tipsReceivedCount: number
-  tipsSentCount: number
-  rank: number
-  userDetails: User
+  fid: number;
+  walletAddress: string;
+  tipsReceived: number;
+  tipsSent: number;
+  tipsReceivedCount: number;
+  tipsSentCount: number;
+  rank: number;
+  userDetails: User;
 }
 
 const SectionTwo = () => {
@@ -85,7 +85,9 @@ const SectionTwo = () => {
     if (!address) return;
 
     try {
-      const response = await fetch(`/api/user-ranking?address=${address}&sort=${selectedTab?.key}`);
+      const response = await fetch(
+        `/api/user-ranking?address=${address}&sort=${selectedTab?.key}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch user ranking");
       }
@@ -157,10 +159,10 @@ const SectionTwo = () => {
       </p>
 
       <div className="mx-auto mt-6 w-fit lg:hidden">
-        <div className="inline-block relative">
+        <div className="relative inline-block">
           <select
             value={selectedTab?.key}
-            className="w-full rounded-lg bg-white bg-opacity-20 px-2 py-2 text-sm font-medium text-[#FFFC00] appearance-none focus:ring-none focus:outline-none"
+            className="focus:ring-none w-full appearance-none rounded-lg bg-white bg-opacity-20 px-2 py-2 text-sm font-medium text-[#FFFC00] focus:outline-none"
             onChange={(e) => {
               const newkey = e.target.value;
               setSelectedTab(tabs?.find((t) => t?.key === newkey));
@@ -172,7 +174,7 @@ const SectionTwo = () => {
               </option>
             ))}
           </select>
-          <FaChevronDown className="absolute top-1/2 -translate-y-1/2 right-2 h-4 w-4 text-[#FFFC00]" />
+          <FaChevronDown className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[#FFFC00]" />
         </div>
       </div>
 
@@ -207,7 +209,7 @@ const SectionTwo = () => {
             <>
               {userRanking && (
                 <div
-                  className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5 bg-purple-50 border-2 border-purple-500"
+                  className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 border-2 border-purple-500 bg-purple-50 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
                   key={userRanking.fid}
                 >
                   <h1 className="text-center text-xs text-B-60 lg:text-lg">
@@ -289,7 +291,7 @@ const SectionTwo = () => {
                       )}
                     </a>
                   </div>
-                  <div className="flex w-full items-center gap-2">
+                  <div className="flex w-full items-center gap-2 overflow-hidden">
                     <div className="relative h-[14px] w-[14px] lg:h-[22px] lg:w-[22px]">
                       <Image
                         src="/icons/bolt_circle.svg"
@@ -301,7 +303,7 @@ const SectionTwo = () => {
                       href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-B-60 lg:text-lg"
+                      className="truncate text-xs text-B-60 lg:text-lg"
                     >
                       {ranking.userDetails?.username ||
                         `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
