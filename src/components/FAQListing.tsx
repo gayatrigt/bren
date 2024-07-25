@@ -33,7 +33,7 @@ const FAQListing = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -3 }}
             transition={{ type: "easeOut" }}
-            className="mt-1 text-[10px] text-W-100 lg:mt-2 lg:text-base"
+            className="mt-1 text-base text-W-100 lg:mt-2 lg:text-lg"
           >
             {answer}
           </motion.p>
