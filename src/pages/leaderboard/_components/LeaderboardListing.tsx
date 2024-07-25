@@ -7,17 +7,22 @@ import {
   User,
   Rankings,
   Pagination,
-  UserRank
+  UserRank,
 } from "~/components/SectionTwo";
 import { cn } from "~/utils/helpers";
 
-const PaginationButton: React.FC<{ page: number | string; isActive: boolean; onClick: () => void }> = ({ page, isActive, onClick }) => (
+const PaginationButton: React.FC<{
+  page: number | string;
+  isActive: boolean;
+  onClick: () => void;
+}> = ({ page, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-8 h-8 rounded-full text-sm font-medium border ${isActive
-      ? 'bg-purple-800 text-white border-purple-800'
-      : 'bg-transparent text-gray-600 border-gray-300 hover:bg-gray-100'
-      } mx-0.5`} // Added mx-0.5 for closer spacing
+    className={`h-8 w-8 rounded-full border text-sm font-medium ${
+      isActive
+        ? "border-purple-800 bg-purple-800 text-white"
+        : "border-gray-300 bg-transparent text-gray-600 hover:bg-gray-100"
+    } mx-0.5`} // Added mx-0.5 for closer spacing
   >
     {page}
   </button>
@@ -46,7 +51,7 @@ const LeaderboardListing: React.FC = () => {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 20
+    itemsPerPage: 20,
   });
 
   const [userRanking, setUserRanking] = useState<UserRank | null>(null);
@@ -55,7 +60,9 @@ const LeaderboardListing: React.FC = () => {
   const fetchUserRanking = async () => {
     if (!address) return;
     try {
-      const response = await fetch(`/api/user-ranking?address=${address}&sort=${selectedTab?.key}`);
+      const response = await fetch(
+        `/api/user-ranking?address=${address}&sort=${selectedTab?.key}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch user ranking");
       }
@@ -71,7 +78,7 @@ const LeaderboardListing: React.FC = () => {
     try {
       // Fetch rankings
       const response = await fetch(
-        `/api/db-rankings?sort=${selectedTab?.key}&page=${currentPage}&limit=${pagination.itemsPerPage}`
+        `/api/db-rankings?sort=${selectedTab?.key}&page=${currentPage}&limit=${pagination.itemsPerPage}`,
       );
       if (!response.ok) {
         throw new Error("Failed to fetch rankings");
@@ -87,10 +94,12 @@ const LeaderboardListing: React.FC = () => {
       const userData: { users: User[] } = await userResponse.json();
 
       // Combine ranking data with user details
-      const enrichedRankings: EnrichedRankingData[] = data.data.map((ranking) => ({
-        ...ranking,
-        userDetails: userData.users.find((user) => user.fid === ranking.fid),
-      }));
+      const enrichedRankings: EnrichedRankingData[] = data.data.map(
+        (ranking) => ({
+          ...ranking,
+          userDetails: userData.users.find((user) => user.fid === ranking.fid),
+        }),
+      );
 
       setRankings(enrichedRankings);
       setPagination(data.pagination);
@@ -125,13 +134,19 @@ const LeaderboardListing: React.FC = () => {
   const halfVisiblePages = Math.floor(maxVisiblePages / 2);
 
   let startPage = Math.max(currentPage - halfVisiblePages, 1);
-  const endPage = Math.min(startPage + maxVisiblePages - 1, pagination.totalPages);
+  const endPage = Math.min(
+    startPage + maxVisiblePages - 1,
+    pagination.totalPages,
+  );
 
   if (endPage - startPage + 1 < maxVisiblePages) {
     startPage = Math.max(endPage - maxVisiblePages + 1, 1);
   }
 
-  const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+  const pageNumbers = Array.from(
+    { length: endPage - startPage + 1 },
+    (_, i) => startPage + i,
+  );
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -158,7 +173,7 @@ const LeaderboardListing: React.FC = () => {
       <p className="my-5 text-sm font-medium text-B-40 lg:my-8 lg:text-[22px]">
         Highest amount of points distributed by Brens.
       </p>
-      <div className="mx-auto w-full max-w-[240px] mt-6 lg:hidden">
+      <div className="mx-auto mt-6 w-full max-w-[240px] lg:hidden">
         <select
           value={selectedTab?.key}
           className="w-full rounded-lg bg-[#31AE7A] px-2 py-2 text-sm font-medium text-[#FFFC00]"
@@ -189,7 +204,7 @@ const LeaderboardListing: React.FC = () => {
             <>
               {currentPage === 1 && userRanking && (
                 <div
-                  className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5 bg-purple-50 border-2 border-purple-500"
+                  className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 border-2 border-purple-500 bg-purple-50 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
                   key={userRanking.fid}
                 >
                   <h1 className="text-center text-xs text-B-60 lg:text-lg">
@@ -236,12 +251,15 @@ const LeaderboardListing: React.FC = () => {
                     </a>
                   </div>
                   <p className="text-center text-xs text-B-60 lg:text-base">
-                    {userRanking[selectedTab?.key as keyof UserRank] as number || 0}
+                    {(userRanking[
+                      selectedTab?.key as keyof UserRank
+                    ] as number) || 0}
                   </p>
                 </div>
               )}
               {rankings.map((ranking, index) => {
-                const rankNumber = (currentPage - 1) * pagination.itemsPerPage + index + 1;
+                const rankNumber =
+                  (currentPage - 1) * pagination.itemsPerPage + index + 1;
                 return (
                   <div
                     className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
@@ -272,7 +290,7 @@ const LeaderboardListing: React.FC = () => {
                         )}
                       </a>
                     </div>
-                    <div className="flex w-full items-center gap-2">
+                    <div className="flex w-full items-center gap-2 overflow-hidden">
                       <div className="relative h-[14px] w-[14px] lg:h-[22px] lg:w-[22px]">
                         <Image
                           src="/icons/bolt_circle.svg"
@@ -284,14 +302,16 @@ const LeaderboardListing: React.FC = () => {
                         href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-B-60 lg:text-lg"
+                        className="truncate text-xs text-B-60 lg:text-lg"
                       >
                         {ranking.userDetails?.username ||
                           `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
                       </a>
                     </div>
                     <p className="text-center text-xs text-B-60 lg:text-base">
-                      {ranking[selectedTab?.key as keyof EnrichedRankingData] as number || 0}
+                      {(ranking[
+                        selectedTab?.key as keyof EnrichedRankingData
+                      ] as number) || 0}
                     </p>
                   </div>
                 );
@@ -301,17 +321,21 @@ const LeaderboardListing: React.FC = () => {
         </div>
       </div>
       {/* Pagination */}
-      <div className="mt-4 flex justify-between items-center">
+      <div className="mt-4 flex items-center justify-between">
         {pagination.totalPages > 1 && (
           <div className="flex">
             {startPage > 1 && (
               <>
-                <PaginationButton page={1} isActive={false} onClick={() => handlePageChange(1)} />
+                <PaginationButton
+                  page={1}
+                  isActive={false}
+                  onClick={() => handlePageChange(1)}
+                />
                 {startPage > 2 && <span className="text-gray-500">...</span>}
               </>
             )}
 
-            {pageNumbers.map(page => (
+            {pageNumbers.map((page) => (
               <PaginationButton
                 key={page}
                 page={page}
@@ -322,7 +346,9 @@ const LeaderboardListing: React.FC = () => {
 
             {endPage < pagination.totalPages && (
               <>
-                {endPage < pagination.totalPages - 1 && <span className="text-gray-500">...</span>}
+                {endPage < pagination.totalPages - 1 && (
+                  <span className="text-gray-500">...</span>
+                )}
                 <PaginationButton
                   page={pagination.totalPages}
                   isActive={false}
@@ -332,7 +358,7 @@ const LeaderboardListing: React.FC = () => {
             )}
           </div>
         )}
-        <span className="text-sm text-gray-500 ml-4">
+        <span className="ml-4 text-sm text-gray-500">
           {`${(currentPage - 1) * pagination.itemsPerPage + 1}-${Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of ${pagination.totalItems}`}
         </span>
       </div>
