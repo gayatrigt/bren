@@ -8,6 +8,8 @@ import { checkWhitelist } from "./functions/checkWhiteList";
 import { botReply } from "./functions/botReply";
 import { setUserAllowance } from "./functions/setAllowance";
 import { processInvite } from "./functions/processInvite";
+import { fids } from "./whitelist/fids";
+import { CheckEligibilityAPIResponse } from "./whitelist/fbi-token";
 
 
 export async function processinviteWebhookData(hash: string) {
@@ -82,7 +84,7 @@ export async function processinviteWebhookData(hash: string) {
 
             const userType = user.type;
 
-            if (userType === 'ALLIES' || userType === 'SPLITTERS') {
+            if (userType === 'WHITELISTED') {
                 console.log(`User is of type ${userType} and can invite`);
 
                 // Perform actions for users who can invite
@@ -127,11 +129,13 @@ export async function processinviteWebhookData(hash: string) {
                 console.log('New user detected');
                 // Perform actions for new user, e.g., create a new user record
 
-                const isPowerBadge = neynarCast.author.power_badge
+                // const isPowerBadge = neynarCast.author.power_badge
 
-                const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
+                // const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
 
-                if (result === 'NOT_WHITELISTED') {
+                const result = await checkEligibility(fromFid);
+
+                if (!result) {
                     console.log('User is not whitelisted');
 
                     const result = await botReply(
@@ -145,23 +149,24 @@ export async function processinviteWebhookData(hash: string) {
                     } else {
                         console.error('Failed to post reply:', result.message);
                     }
-
-                } if (result === 'FOLLOWER' || result === 'INVITED' || result === 'POWER_BADGE') {
-                    console.log('User cannot invite');
-
-                    const result = await botReply(
-                        castHash,
-                        `Hey ${fromUsername}! You are not eligible to invite a Bren. Only Build committers can invite.`,
-                        `You are not eligible to invite a Bren`
-                    );
-
-                    if (result.success) {
-                        console.log('Reply posted successfully:', result.castHash);
-                    } else {
-                        console.error('Failed to post reply:', result.message);
-                    }
                 }
-                else if (result === 'ALLIES' || result === 'SPLITTERS') {
+
+                // } if (result) {
+                //     console.log('User cannot invite');
+
+                //     const result = await botReply(
+                //         castHash,
+                //         `Hey ${fromUsername}! You are not eligible to invite a Bren. Only Build committers can invite.`,
+                //         `You are not eligible to invite a Bren`
+                //     );
+
+                //     if (result.success) {
+                //         console.log('Reply posted successfully:', result.castHash);
+                //     } else {
+                //         console.error('Failed to post reply:', result.message);
+                //     }
+                // }
+                else if (result) {
                     console.log(`User is whitelisted as ${result}`);
 
                     try {
@@ -173,14 +178,14 @@ export async function processinviteWebhookData(hash: string) {
                                 username: fromUsername,
                                 pfp: neynarCast.author.pfp_url,
                                 isAllowanceGiven: false,
-                                type: result
+                                type: 'WHITELISTED'
                             },
                         });
 
                         console.log(`New user created successfully. FID: ${fromFid}`);
 
                         try {
-                            await setUserAllowance(fromFid, fromAddress, result);
+                            await setUserAllowance(fromFid, fromAddress, 'WHITELISTED');
                             console.log('Allowance set and database updated successfully');
 
                             // Perform actions for users who can invite
@@ -256,3 +261,35 @@ const checkUserExists = async (fid: number, walletAddress: string) => {
         return false;
     }
 };
+
+async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
+    console.log('Checking eligibility for FID:', fromFid);
+
+    // First, check if the FID exists in the fids object
+    if (fids.includes(fromFid)) {
+        console.log('FID found in local database');
+        return true
+    }
+
+    console.log('FID not found in local database, checking whitelist API');
+
+    // If not in fids object, call the local API
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/whitelist/fbi-token?fid=${fromFid}`);
+        const result: CheckEligibilityAPIResponse = await response.json();
+
+        if (result.data.TokenBalances?.TokenBalance === null) {
+            console.log('User is not whitelisted');
+            return false;
+        } else if (result.data.TokenBalances?.TokenBalance[0]?.tokenId === '1') {
+            console.log('User is whitelisted');
+            return true;
+        } else {
+            console.log('Unexpected result from whitelist API');
+            return undefined
+        }
+    } catch (error) {
+        console.error('Error checking whitelist:', error);
+        return undefined
+    }
+}
