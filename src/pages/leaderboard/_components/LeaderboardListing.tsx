@@ -158,7 +158,7 @@ const LeaderboardListing: React.FC = () => {
           </div>
         ))}
       </div>
-      <div className="mx-auto mt-6 w-full max-w-[240px] lg:hidden">
+      <div className="mx-auto mt-6 w-fit lg:hidden">
         <div className="inline-block relative">
           <select
             value={selectedTab?.key}

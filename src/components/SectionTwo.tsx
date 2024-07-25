@@ -156,7 +156,7 @@ const SectionTwo = () => {
         but also top performers in various categories.
       </p>
 
-      <div className="mx-auto mt-6 w-full max-w-[240px] lg:hidden">
+      <div className="mx-auto mt-6 w-fit lg:hidden">
         <div className="inline-block relative">
           <select
             value={selectedTab?.key}
