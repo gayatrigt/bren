@@ -139,7 +139,6 @@ const LeaderboardListing: React.FC = () => {
   };
 
   // exclude the current user from the rankings
-  const filteredRankings = rankings.filter((ranking) => ranking.walletAddress !== address);
 
   return (
     <div className="mx-auto mt-12 w-full max-w-[1200px] px-5 lg:px-10">
@@ -249,7 +248,7 @@ const LeaderboardListing: React.FC = () => {
                   </p>
                 </div>
               )}
-              {filteredRankings.map((ranking, index) => {
+              {rankings.map((ranking, index) => {
                 const rankNumber = (currentPage - 1) * pagination.itemsPerPage + index + 1;
                 return (
                   <div
