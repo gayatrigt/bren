@@ -192,7 +192,7 @@ const LeaderboardListing: React.FC = () => {
                         <img
                           alt="Profile"
                           src={userRanking.userDetails.pfp_url}
-                          className="h-8 w-8 rounded-full"
+                          className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (
                         <Image
@@ -247,7 +247,7 @@ const LeaderboardListing: React.FC = () => {
                           <img
                             alt="Profile"
                             src={ranking.userDetails.pfp_url}
-                            className="h-8 w-8 rounded-full"
+                            className="h-8 w-8 rounded-full object-cover"
                           />
                         ) : (
                           <Image
