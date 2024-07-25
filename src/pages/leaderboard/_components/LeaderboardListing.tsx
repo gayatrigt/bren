@@ -1,5 +1,6 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
+import { FaChevronDown } from "react-icons/fa6";
 import { useAccount } from "wagmi";
 import {
   ApiResponse,
@@ -137,6 +138,9 @@ const LeaderboardListing: React.FC = () => {
     setCurrentPage(newPage);
   };
 
+  // exclude the current user from the rankings
+  const filteredRankings = rankings.filter((ranking) => ranking.walletAddress !== address);
+
   return (
     <div className="mx-auto mt-12 w-full max-w-[1200px] px-5 lg:px-10">
       <div className="mx-auto hidden w-full items-center justify-between rounded-[14px] bg-[#2C9569] px-16  lg:flex">
@@ -156,20 +160,23 @@ const LeaderboardListing: React.FC = () => {
         ))}
       </div>
       <div className="mx-auto mt-6 w-full max-w-[240px] lg:hidden">
-        <select
-          value={selectedTab?.key}
-          className="w-full rounded-lg bg-[#31AE7A] px-2 py-2 text-sm font-medium text-[#FFFC00]"
-          onChange={(e) => {
-            const newkey = e.target.value;
-            setSelectedTab(tabs?.find((t) => t?.key === newkey));
-          }}
-        >
-          {tabs?.map((tab) => (
-            <option key={tab?.key} value={tab?.key}>
-              {tab?.title}
-            </option>
-          ))}
-        </select>
+        <div className="inline-block relative">
+          <select
+            value={selectedTab?.key}
+            className="w-full rounded-lg bg-[#31AE7A] px-2 py-2 text-sm font-medium text-[#FFFC00] appearance-none"
+            onChange={(e) => {
+              const newkey = e.target.value;
+              setSelectedTab(tabs?.find((t) => t?.key === newkey));
+            }}
+          >
+            {tabs?.map((tab) => (
+              <option key={tab?.key} value={tab?.key}>
+                {tab?.title}
+              </option>
+            ))}
+          </select>
+          <FaChevronDown className="absolute top-1/2 -translate-y-1/2 right-2 h-4 w-4 text-[#FFFC00]" />
+        </div>
       </div>
 
       <p className="my-8 text-sm font-medium text-B-40 lg:text-[22px]">
@@ -242,7 +249,7 @@ const LeaderboardListing: React.FC = () => {
                   </p>
                 </div>
               )}
-              {rankings.map((ranking, index) => {
+              {filteredRankings.map((ranking, index) => {
                 const rankNumber = (currentPage - 1) * pagination.itemsPerPage + index + 1;
                 return (
                   <div

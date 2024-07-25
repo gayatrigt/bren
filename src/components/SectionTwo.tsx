@@ -3,6 +3,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { cn } from "~/utils/helpers";
+import { FaChevronDown } from "react-icons/fa6";
 
 export interface RankingData {
   fid: number;
@@ -154,6 +155,27 @@ const SectionTwo = () => {
         leaderboard showcases not only Bren recipients, <br />
         but also top performers in various categories.
       </p>
+
+      <div className="mx-auto mt-6 w-full max-w-[240px] lg:hidden">
+        <div className="inline-block relative">
+          <select
+            value={selectedTab?.key}
+            className="w-full rounded-lg bg-white bg-opacity-20 px-2 py-2 text-sm font-medium text-[#FFFC00] appearance-none focus:ring-none focus:outline-none"
+            onChange={(e) => {
+              const newkey = e.target.value;
+              setSelectedTab(tabs?.find((t) => t?.key === newkey));
+            }}
+          >
+            {tabs?.map((tab) => (
+              <option key={tab?.key} value={tab?.key}>
+                {tab?.title}
+              </option>
+            ))}
+          </select>
+          <FaChevronDown className="absolute top-1/2 -translate-y-1/2 right-2 h-4 w-4 text-[#FFFC00]" />
+        </div>
+      </div>
+
       <div className="mx-auto mt-12 hidden w-full max-w-[980px] items-center justify-between rounded-[14px] bg-[rgba(17,16,17,0.16)] px-5 lg:flex">
         {tabs.map((tab) => (
           <div
