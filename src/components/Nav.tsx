@@ -35,7 +35,7 @@ const Nav = () => {
   const isMobile = useMediaQuery('(max-width: 640px)');  // You'll need to implement this hook
 
   const buttonClasses = classNames({
-    'w-40 py-2 text-base -mr-20': isMobile,  // Mobile classes
+    'py-2 px-4 text-base': isMobile,  // Mobile classes
     'w-[200px] py-[13px] px-6 text-lg': !isMobile,  // Desktop classes
     'rounded-[10px] border-[1.5px] border-pu-100 font-medium text-pu-100': true,  // Common classes
   });
@@ -49,7 +49,20 @@ const Nav = () => {
       <div className="fixed left-0 right-0 top-0 z-30 w-full backdrop-blur-[12px]">
         <nav className="mx-auto w-full lg:max-w-[1600px]">
           <div className="flex items-center justify-between px-5 pb-2 pt-5 lg:px-[60px] lg:pt-10">
-            <Image width={90} height={30} src="/icons/logo.svg" alt="Bren" />
+
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/icons/hamburger.svg"
+                alt="Menu"
+                width={24}
+                height={24}
+                className="block cursor-pointer lg:hidden"
+                onClick={() => setShowMenu(true)}
+              />
+
+              <Image width={90} height={30} src="/icons/logo.svg" alt="Bren" />
+            </div>
+
             <div className="hidden space-x-4 lg:block">
               {Navlinks?.map((link) => (
                 <Link
@@ -84,14 +97,6 @@ const Nav = () => {
               </button>
             }
 
-            <Image
-              src="/icons/hamburger.svg"
-              alt="Menu"
-              width={24}
-              height={24}
-              className="block cursor-pointer lg:hidden"
-              onClick={() => setShowMenu(true)}
-            />
           </div>
         </nav>
       </div>
