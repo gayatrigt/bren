@@ -354,7 +354,7 @@ async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
 
     // If not in fids object, call the local API
     try {
-        const response = await fetch(`http://localhost:3000/api/whitelist/fbi-token?fid=${fromFid}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/whitelist/fbi-token?fid=${fromFid}`);
         const result: CheckEligibilityAPIResponse = await response.json();
 
         if (result.data.TokenBalances?.TokenBalance === null) {
