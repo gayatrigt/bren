@@ -16,8 +16,8 @@ const Home: NextPage<{ transactions: Transaction[] }> = (props) => {
   return (
     <>
       <Head>
-        <title>$bren Dashboard</title>
-        <meta name="description" content="Checkout the $bren tippings" />
+        <title>Bren</title>
+        <meta name="description" content="Recognize your Based frens with $bren" />
         <link rel="icon" href="/icon-bren.png" />
         <meta property="fc:frame" content="vNext" />
         <meta
