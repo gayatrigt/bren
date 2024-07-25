@@ -155,6 +155,22 @@ const LeaderboardListing: React.FC = () => {
           </div>
         ))}
       </div>
+      <div className="mx-auto mt-6 w-full max-w-[240px] lg:hidden">
+        <select
+          value={selectedTab?.key}
+          className="w-full rounded-lg bg-[#31AE7A] px-2 py-2 text-sm font-medium text-[#FFFC00]"
+          onChange={(e) => {
+            const newkey = e.target.value;
+            setSelectedTab(tabs?.find((t) => t?.key === newkey));
+          }}
+        >
+          {tabs?.map((tab) => (
+            <option key={tab?.key} value={tab?.key}>
+              {tab?.title}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <p className="my-8 text-sm font-medium text-B-40 lg:text-[22px]">
         Highest amount of points distributed by Brens.
