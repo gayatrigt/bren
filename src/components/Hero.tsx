@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-
 const Hero = () => {
   const mindsetList = [
     {
@@ -55,8 +54,8 @@ const Hero = () => {
             mindset
           </p>
           <div className="grid gap-5 lg:grid-cols-[380px_1fr] lg:gap-12">
-            <div className=" mx-auto flex w-full max-w-[380px] items-center justify-center rounded-xl bg-pu-100 p-2 lg:p-0">
-              <div className="max-ww-[360px] relative h-auto w-full">
+            <div className="mx-auto flex w-full max-w-[380px] items-center justify-center rounded-xl bg-pu-100 p-2 lg:p-0">
+              <div className="relative h-auto w-full max-w-[360px]">
                 <img
                   src="/icons/tweet_1.png"
                   alt="Tweet"

@@ -10,7 +10,7 @@ import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { cn } from "~/utils/helpers";
 import { walletFormat } from "~/utils/walletFormat";
-import classNames from 'classnames';  // Make sure to import classnames library
+import classNames from "classnames"; // Make sure to import classnames library
 
 const Nav = () => {
   const { openConnectModal } = useConnectModal();
@@ -31,13 +31,23 @@ const Nav = () => {
 
   const [showMenu, setShowMenu] = useState(false);
 
+  const openMenu = () => {
+    setShowMenu(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeMenu = () => {
+    setShowMenu(false);
+    document.body.style.overflow = "";
+  };
+
   // ... in your component
-  const isMobile = useMediaQuery('(max-width: 640px)');  // You'll need to implement this hook
+  const isMobile = useMediaQuery("(max-width: 640px)"); // You'll need to implement this hook
 
   const buttonClasses = classNames({
-    'w-40 py-2 text-base -mr-20': isMobile,  // Mobile classes
-    'w-[200px] py-[13px] px-6 text-lg': !isMobile,  // Desktop classes
-    'rounded-[10px] border-[1.5px] border-pu-100 font-medium text-pu-100': true,  // Common classes
+    "py-2 text-base px-2": isMobile, // Mobile classes
+    "w-[200px] py-[13px] px-6 text-lg": !isMobile, // Desktop classes
+    "rounded-[10px] border-[1.5px] border-pu-100 font-medium text-pu-100": true, // Common classes
   });
 
   const walletFormat = (address: string, chars = 6) => {
@@ -48,8 +58,21 @@ const Nav = () => {
     <nav className="relative">
       <div className="fixed left-0 right-0 top-0 z-30 w-full backdrop-blur-[12px]">
         <nav className="mx-auto w-full lg:max-w-[1600px]">
-          <div className="flex items-center justify-between px-5 pb-2 pt-5 lg:px-[60px] lg:pt-10">
-            <Image width={90} height={30} src="/icons/logo.svg" alt="Bren" />
+          <div className="flex max-w-full items-center justify-between px-5 pb-2 pt-5 lg:px-[60px] lg:pt-10">
+            <div className="flex items-center space-x-3">
+              <Image
+                src="/icons/hamburger.svg"
+                alt="Menu"
+                width={20}
+                height={13}
+                className="block cursor-pointer lg:hidden"
+                onClick={openMenu}
+              />
+              <div className="relative h-[24px] w-[60px] lg:h-[30px] lg:w-[90px] ">
+                <Image layout="fill" src="/icons/logo.svg" alt="Bren" />
+              </div>
+            </div>
+
             <div className="hidden space-x-4 lg:block">
               {Navlinks?.map((link) => (
                 <Link
@@ -67,37 +90,22 @@ const Nav = () => {
               ))}
             </div>
 
-            {
-              !data.address &&
-              <button
-                onClick={openConnectModal}
-                className={buttonClasses}                >
+            {!data.address && (
+              <button onClick={openConnectModal} className={buttonClasses}>
                 Connect Wallet
               </button>
-            }
-            {
-              !!data.address &&
-              <button
-                onClick={openAccountModal}
-                className={buttonClasses}                >
+            )}
+            {!!data.address && (
+              <button onClick={openAccountModal} className={buttonClasses}>
                 {walletFormat(data.address)}
               </button>
-            }
-
-            <Image
-              src="/icons/hamburger.svg"
-              alt="Menu"
-              width={24}
-              height={24}
-              className="block cursor-pointer lg:hidden"
-              onClick={() => setShowMenu(true)}
-            />
+            )}
           </div>
         </nav>
       </div>
 
       {showMenu && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 flex h-screen w-full flex-col bg-white pb-14 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex h-screen w-full flex-col bg-white pb-14 lg:hidden">
           <div className="flex items-center justify-between bg-Y-100 px-5 pb-12 pt-[54px]">
             <h1 className="text-2xl text-pu-100">Menu</h1>
 
@@ -107,9 +115,7 @@ const Nav = () => {
               width={24}
               height={24}
               className="cursor-pointer"
-              onClick={() => {
-                setShowMenu(false);
-              }}
+              onClick={closeMenu}
             />
           </div>
 
@@ -120,7 +126,7 @@ const Nav = () => {
                   href={link?.link}
                   key={link?.title}
                   className="text-pu-100"
-                  onClick={() => setShowMenu(false)}
+                  onClick={closeMenu}
                 >
                   {link?.title}
                 </Link>
@@ -134,7 +140,6 @@ const Nav = () => {
 };
 
 export default Nav;
-
 
 function useMediaQuery(query: any) {
   const [matches, setMatches] = useState(false);

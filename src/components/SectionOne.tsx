@@ -37,7 +37,7 @@ const SectionOne = () => {
         <h1 className="text-center text-xl font-bold text-white lg:mb-2 lg:text-[40px]">
           How Bren Works
         </h1>
-        <h2 className="mb-5 text-center text-xs text-W-100 lg:mb-[60px] lg:text-[22px]">
+        <h2 className="mb-5 text-center text-sm text-W-100 lg:mb-[60px] lg:text-[22px]">
           Recognize and Reward Based Contributions
         </h2>
 
