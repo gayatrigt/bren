@@ -49,8 +49,11 @@ const Hero = () => {
             economy by <br className="lg:hidden" />
             sending $bren and shoutouts
           </h2>
-          <button className="md:w-[125px] rounded border border-p-100 bg-white py-3 text-xs font-bold
-           text-pu-100 shadow-[8px_8px_0px_0px_#BD44D9] lg:w-[210px] lg:py-4 lg:text-lg"     onClick={handleOpenPopup}>
+          <button
+            className="rounded border border-p-100 bg-white py-3 text-xs font-bold text-pu-100
+           shadow-[8px_8px_0px_0px_#BD44D9] md:w-[125px] lg:w-[210px] lg:py-4 lg:text-lg"
+            onClick={handleOpenPopup}
+          >
             Check Eligibility
           </button>
         </section>
@@ -67,7 +70,7 @@ const Hero = () => {
           </p>
           <div className="grid gap-5 lg:grid-cols-[380px_1fr] lg:gap-12">
             <div className=" mx-auto flex w-full max-w-[380px] items-center justify-center rounded-xl bg-pu-100 p-2 lg:p-0">
-              <div className="max-ww-[360px] relative h-auto w-full">
+              <div className="relative h-auto w-full max-w-[360px]">
                 <img
                   src="/icons/tweet_1.png"
                   alt="Tweet"
@@ -96,7 +99,7 @@ const Hero = () => {
       <Popup
         isOpen={isPopupOpen}
         onClose={handleClosePopup}
-        address={address || ''}
+        address={address || ""}
       />
     </div>
   );
