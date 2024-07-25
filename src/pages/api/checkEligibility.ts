@@ -131,3 +131,105 @@
 //         return res.status(500).json({ message: 'Internal Server Error' });
 //     }
 // }
+
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { env } from '~/env';
+import { CheckEligibilityAPIResponse } from './whitelist/fbi-token';
+import { fids } from './whitelist/fids';
+
+async function getFidFromNeynar(address: string): Promise<number | null> {
+    const url = `https://api.neynar.com/v2/farcaster/user/bulk-by-address?addresses=${address}`;
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'accept': 'application/json',
+                'api_key': env.NEYNAR_API_KEY
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch from Neynar API');
+        }
+
+        const data = await response.json();
+        const user = data[address.toLowerCase()]?.[0];
+        return user ? user.fid : null;
+    } catch (error) {
+        console.error('Error fetching from Neynar API:', error);
+        return null;
+    }
+}
+
+async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
+    console.log('Checking eligibility for FID:', fromFid);
+
+    // First, check if the FID exists in the fids object
+    if (fids.includes(fromFid)) {
+        console.log('FID found in local database');
+        return true
+    }
+
+    console.log('FID not found in local database, checking whitelist API');
+
+    // If not in fids object, call the local API
+    try {
+        const response = await fetch(`http://localhost:3000/api/whitelist/fbi-token?fid=${fromFid}`);
+        const result: CheckEligibilityAPIResponse = await response.json();
+
+        if (result.data.TokenBalances?.TokenBalance === null) {
+            console.log('User is not whitelisted');
+            return false;
+        } else if (result.data.TokenBalances?.TokenBalance[0]?.tokenId === '1') {
+            console.log('User is whitelisted');
+            return true;
+        } else {
+            console.log('Unexpected result from whitelist API');
+            return undefined
+        }
+    } catch (error) {
+        console.error('Error checking whitelist:', error);
+        return undefined
+    }
+}
+
+export default async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse
+) {
+    const { address } = req.query;
+
+    if (!address || typeof address !== 'string') {
+        return res.status(400).json({ error: 'Address is required' });
+    }
+
+    try {
+        const fid = await getFidFromNeynar(address);
+
+        if (!fid) {
+            return res.status(404).json({ error: 'FID not found for the given address' });
+        }
+
+        const isEligible = await checkEligibility(fid);
+
+        if (isEligible === undefined) {
+            return res.status(500).json({ error: 'Error checking eligibility' });
+        }
+
+        const baseUrl = 'https://warpcast.com/~/compose?text=';
+        let message, link;
+
+        if (isEligible) {
+            message = 'You are eligible to tip bren!';
+            link = `${baseUrl}${encodeURIComponent('@brenbot [add points] $bren [add user] for [add any value #Integrity #Teamwork #Tenacity #Creativity #Optimism]')}`;
+        } else {
+            message = 'You cannot tip bren, but you can get an invite from Yele or Gayatri';
+            link = `${baseUrl}${encodeURIComponent('@yele @gayatri Can I get an invite to tip Bren?')}&channelKey=bren`;
+        }
+
+        res.status(200).json({ isEligible, message, link });
+    } catch (error) {
+        console.error('Error in eligibility check:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}

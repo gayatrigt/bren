@@ -11,16 +11,16 @@ export interface CheckEligibilityAPIResponse {
     data: Data
 }
 
-interface Data {
+export interface Data {
     TokenBalances?: TokenBalances
 }
 
-interface TokenBalances {
+export interface TokenBalances {
     TokenBalance: TokenBalance[]
 }
 
-interface TokenBalance {
-    tokenId: number
+export interface TokenBalance {
+    tokenId: string
 }
 
 
@@ -69,6 +69,8 @@ export default async function GET(req: NextRequest) {
         console.log(3)
 
         const data = response.data;
+
+        console.log("token", data)
 
         return NextResponse.json(data, { status: 200 });
     } catch (error) {

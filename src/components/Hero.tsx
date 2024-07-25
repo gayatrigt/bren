@@ -1,6 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { useState } from "react";
+import Popup from "./ElibilityPopup";
+import { useAccount } from "wagmi";
+
 const Hero = () => {
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const { address } = useAccount();
+
+  const handleOpenPopup = () => setIsPopupOpen(true);
+  const handleClosePopup = () => setIsPopupOpen(false);
+
   const mindsetList = [
     {
       title: "Integrity",
@@ -39,7 +49,8 @@ const Hero = () => {
             economy by <br className="lg:hidden" />
             sending $bren and shoutouts
           </h2>
-          <button className="w-[125px] rounded border border-p-100 bg-white py-3 text-xs font-bold text-pu-100 shadow-[8px_8px_0px_0px_#BD44D9] lg:w-[210px] lg:py-4 lg:text-lg">
+          <button className="w-[125px] rounded border border-p-100 bg-white py-3 text-xs font-bold
+           text-pu-100 shadow-[8px_8px_0px_0px_#BD44D9] lg:w-[210px] lg:py-4 lg:text-lg"     onClick={handleOpenPopup}>
             Check Eligibility
           </button>
         </section>
@@ -82,6 +93,11 @@ const Hero = () => {
           </div>
         </section>
       </section>
+      <Popup
+        isOpen={isPopupOpen}
+        onClose={handleClosePopup}
+        address={address || ''}
+      />
     </div>
   );
 };

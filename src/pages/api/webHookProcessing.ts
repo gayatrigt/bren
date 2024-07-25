@@ -345,7 +345,7 @@ async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
     console.log('Checking eligibility for FID:', fromFid);
 
     // First, check if the FID exists in the fids object
-    if (fromFid in fids) {
+    if (fids.includes(fromFid)) {
         console.log('FID found in local database');
         return true
     }
@@ -360,7 +360,7 @@ async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
         if (result.data.TokenBalances?.TokenBalance === null) {
             console.log('User is not whitelisted');
             return false;
-        } else if (result.data.TokenBalances?.TokenBalance[0]?.tokenId === 1) {
+        } else if (result.data.TokenBalances?.TokenBalance[0]?.tokenId === '1') {
             console.log('User is whitelisted');
             return true;
         } else {
