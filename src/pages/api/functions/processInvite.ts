@@ -54,7 +54,7 @@ export async function processInvite(invitorFid: number, cast: Cast) {
             where: { fid: mentionedProfile.fid }
         });
 
-        const isPowerBadge = mentionedProfile.power_badge
+        // const isPowerBadge = mentionedProfile.power_badge
 
         const result = await checkEligibility(mentionedProfile.fid);
 
@@ -82,8 +82,19 @@ export async function processInvite(invitorFid: number, cast: Cast) {
                 }
             });
 
-            const newUser = await db.user.create({
-                data: {
+            // Use upsert instead of create to handle both new and existing users
+            const newUser = await db.user.upsert({
+                where: {
+                    walletAddress: mentionedProfile.verified_addresses.eth_addresses[0] || ''
+                },
+                update: {
+                    fid: mentionedProfile.fid,
+                    display_name: mentionedProfile.display_name,
+                    username: mentionedProfile.username,
+                    pfp: mentionedProfile.pfp_url,
+                    type: 'INVITED'
+                },
+                create: {
                     fid: mentionedProfile.fid,
                     walletAddress: mentionedProfile.verified_addresses.eth_addresses[0] || '',
                     display_name: mentionedProfile.display_name,
