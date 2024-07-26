@@ -75,17 +75,14 @@ export async function processinviteWebhookData(hash: string) {
 
             const user = await db.user.findUnique({
                 where: { fid: fromFid },
-                select: { type: true }
             });
 
             if (!user) {
                 throw new Error('User not found in the database');
             }
 
-            const userType = user.type;
-
-            if (userType === 'WHITELISTED') {
-                console.log(`User is of type ${userType} and can invite`);
+            if (user) {
+                console.log(`User can invite`);
 
                 // Perform actions for users who can invite
                 try {
@@ -125,7 +122,7 @@ export async function processinviteWebhookData(hash: string) {
                     }
                 }
 
-            } else {
+            } else if (!user) {
                 console.log('New user detected');
                 // Perform actions for new user, e.g., create a new user record
 
