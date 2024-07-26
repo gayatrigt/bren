@@ -31,7 +31,25 @@ export async function processInvite(invitorFid: number, cast: Cast) {
         return;
     }
 
-    let invitesLeft = 3 - invitesUsed;
+    let invitesLeft = 3
+    const isSpecialInvitor = invitorFid === 190081 || invitorFid === 469678;
+
+    if (!isSpecialInvitor) {
+        // 1. Check if the invitor has invites left for the week
+        const invitesUsed = await db.invite.count({
+            where: {
+                invitorFid: invitorFid,
+                createdAt: { gte: startOfWeek }
+            }
+        });
+
+        if (invitesUsed >= 3) {
+            console.log(`Invitor ${invitorFid} has no invites left for this week.`);
+            return;
+        }
+
+        invitesLeft = 3 - invitesUsed;
+    }
 
     // 4. Process each mentioned profile
     for (const mentionedProfile of cast.mentioned_profiles) {
@@ -119,7 +137,9 @@ export async function processInvite(invitorFid: number, cast: Cast) {
                 // 5. Send bot reply for successful invite
                 const replyText = `Hey @${cast.author.username}! You have successfully invited @${mentionedProfile.username}.`;
                 await botReplyInvite(cast.hash, replyText, invitorFid, mentionedProfile.fid);
-                invitesLeft--;
+                if (!isSpecialInvitor) {
+                    invitesLeft--;
+                }
             }
 
         } catch (error) {
