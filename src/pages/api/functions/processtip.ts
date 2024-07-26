@@ -25,21 +25,21 @@ export async function processTip(
         const following = await isFollowing(fromFid);
         console.log('Is following brenbot:', following);
 
-        if (!following) {
-            const result = await botReplyFail(
-                castHash,
-                `Hey @${fromUsername}!\nYou cannot tip bren as you are not following @brenbot.`,
-                "Tip Failed to be processed",
-                currentAllowance
-            );
+        // if (!following) {
+        //     const result = await botReplyFail(
+        //         castHash,
+        //         `Hey @${fromUsername}!\nYou cannot tip bren as you are not following @brenbot.`,
+        //         "Tip Failed to be processed",
+        //         currentAllowance
+        //     );
 
-            if (result.success) {
-                console.log('Reply posted successfully:', result.castHash);
-            } else {
-                console.error('Failed to post reply:', result.message);
-            }
-            return; // Exit the function early
-        }
+        //     if (result.success) {
+        //         console.log('Reply posted successfully:', result.castHash);
+        //     } else {
+        //         console.error('Failed to post reply:', result.message);
+        //     }
+        //     return; // Exit the function early
+        // }
 
         // Check if the hashtag is valid
         if (!validHashtags.includes(lowercaseHashtag)) {
