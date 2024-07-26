@@ -1,6 +1,6 @@
 // pages/api/collect-fids.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { warpcastUrls } from './urls';
+import { warpcastUrls, warpcastUrlsnew } from './urls';
 import fetch from 'node-fetch';
 import { env } from '~/env';
 
@@ -71,7 +71,7 @@ export default async function handler(
     try {
         const fids: Record<string, number> = {};
 
-        for await (const [username, url] of Object.entries(warpcastUrls)) {
+        for await (const [username, url] of Object.entries(warpcastUrlsnew)) {
             const apiUrl = `https://api.neynar.com/v2/farcaster/user/search?q=${username}&limit=1`;
             const options = {
                 method: 'GET',

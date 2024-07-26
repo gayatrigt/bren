@@ -82,3 +82,35 @@ export const warpcastUrls = {
     parthvora: "https://warpcast.com/parthvora",
     papa: "https://warpcast.com/papa"
 };
+
+export const warpcastUrlsnew = {
+    sangz: "https://warpcast.com/sangz",
+    dicethedev: "https://warpcast.com/dicethedev",
+    techwithmide: "https://warpcast.com/techwithmide",
+    gnericvibes: "https://warpcast.com/gnericvibes",
+    corncreator1: "https://warpcast.com/@corncreator1",
+    adeolaadesina: "https://warpcast.com/adeolaadesina",
+    thirdinternet: "https://warpcast.com/thirdinternet",
+    "chibie.eth": "https://warpcast.com/chibie.eth",
+    onchainmusic: "https://warpcast.com/onchainmusic",
+    anesi: "https://warpcast.com/anesi",
+    pauligbinedion: "https://warpcast.com/pauligbinedion",
+    sheys: "https://warpcast.com/sheys",
+    vickish: "https://warpcast.com/vickish",
+    thecyberverse: "https://warpcast.com/thecyberverse",
+    "buildwithmc.eth": "https://warpcast.com/buildwithmc.eth",
+    ekeson: "https://warpcast.com/ekeson",
+    rasakrypt: "https://warpcast.com/rasakrypt",
+    kokocodes: "https://warpcast.com/kokocodes",
+    eketeug: "https://warpcast.com/eketeug",
+    steffqing: "https://warpcast.com/steffqing",
+    genesisdegen: "https://warpcast.com/genesisdegen",
+    decentraliz: "https://warpcast.com/decentraliz",
+    timidbg: "https://warpcast.com/timidbg",
+    lotacrypt: "https://warpcast.com/lotacrypt",
+    Chukwukauba: "https://warpcast.com/Chukwukauba",
+    druxamb: "https://warpcast.com/druxamb",
+    Agbavi001: "https://warpcast.com/@Agbavi001",
+    olanetsoft: "https://warpcast.com/olanetsoft",
+    "sir-damilare": "https://warpcast.com/sir-damilare"
+};
