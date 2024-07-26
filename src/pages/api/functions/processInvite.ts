@@ -6,6 +6,8 @@ import { Cast } from '~/contracts/NeynarCast';
 import { getStartOfWeek } from '../getUserStats';
 import { setUserAllowance } from './setAllowance';
 import { checkWhitelist } from './checkWhiteList';
+import { CheckEligibilityAPIResponse } from '../whitelist/fbi-token';
+import { fids } from '../whitelist/fids';
 
 export async function processInvite(invitorFid: number, cast: Cast) {
     const startOfWeek = getStartOfWeek();
@@ -54,9 +56,9 @@ export async function processInvite(invitorFid: number, cast: Cast) {
 
         const isPowerBadge = mentionedProfile.power_badge
 
-        const result = await checkWhitelist(mentionedProfile.fid, inviteeWalletAddress, isPowerBadge);
+        const result = await checkEligibility(mentionedProfile.fid);
 
-        if (existingUser || result !== 'NOT_WHITELISTED') {
+        if (existingUser || result) {
             console.log(`User ${mentionedProfile.username} is already invited to Bren.`);
             await botReplywihtoutFrame(cast.hash, `Hey @${cast.author.username}, @${mentionedProfile.username} is already invited to Bren.`);
             continue;
@@ -112,5 +114,37 @@ export async function processInvite(invitorFid: number, cast: Cast) {
         } catch (error) {
             console.error(`Error processing invite for user ${mentionedProfile.fid}:`, error);
         }
+    }
+}
+
+async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
+    console.log('Checking eligibility for FID:', fromFid);
+
+    // First, check if the FID exists in the fids object
+    if (fids.includes(fromFid)) {
+        console.log('FID found in local database');
+        return true
+    }
+
+    console.log('FID not found in local database, checking whitelist API');
+
+    // If not in fids object, call the local API
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/whitelist/fbi-token?fid=${fromFid}`);
+        const result: CheckEligibilityAPIResponse = await response.json();
+
+        if (result.data.TokenBalances?.TokenBalance === null) {
+            console.log('User is not whitelisted');
+            return false;
+        } else if (result.data.TokenBalances?.TokenBalance[0]?.tokenId === '1') {
+            console.log('User is whitelisted');
+            return true;
+        } else {
+            console.log('Unexpected result from whitelist API');
+            return undefined
+        }
+    } catch (error) {
+        console.error('Error checking whitelist:', error);
+        return undefined
     }
 }
