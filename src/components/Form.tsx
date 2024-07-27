@@ -36,22 +36,25 @@ const Form: React.FC<FormProps> = ({ allowanceLeft, text, parent }) => {
     setIsLoading(true)
     try {
       const mappedValues = selectedValues.map(value => `#${value}`).join(' ');
-      let castText = message ? `${message} ` : '';
-      castText += `[mention user] ${tipAmount} $bren ${mappedValues}`;
+      // let castText = message ? `${message} ` : '';
+      // castText += `[mention user] ${tipAmount} $bren ${mappedValues}`;
 
-      const castData: any = {
-        text: castText,
-        embeds: [], // Add this line to include the required 'embeds' array
-      };
+      // const castData: any = {
+      //   text: castText,
+      //   embeds: [], // Add this line to include the required 'embeds' array
+      // };
 
-      if (parent) {
-        castData.parent = parent;
-      }
+      // if (parent) {
+      //   castData.parent = parent;
+      // }
 
       window.parent.postMessage({
-        type: "Cast",
+        type: "createCast",
         data: {
-          cast: castData
+          cast: {
+            text: `[mention user] ${tipAmount} $bren ${mappedValues}`,
+            embeds: []
+          }
         }
       }, "*");
     } catch (error) {
