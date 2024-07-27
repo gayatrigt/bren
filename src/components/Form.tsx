@@ -50,7 +50,7 @@ const Form: React.FC<FormProps> = ({ allowanceLeft, text, parent }) => {
       window.parent.postMessage({
         type: "createCast",
         data: {
-          cast: castData
+          cast: { castData }
         }
       }, "*");
     } catch (error) {
