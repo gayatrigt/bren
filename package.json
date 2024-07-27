@@ -24,6 +24,7 @@
     "api": "^6.1.1",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
+    "csv-stringify": "^6.5.1",
     "csv-writer": "^1.6.0",
     "framer-motion": "^11.3.2",
     "frames.js": "^0.17.0",

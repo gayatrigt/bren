@@ -161,7 +161,7 @@ async function getFidFromNeynar(address: string): Promise<number | null> {
     }
 }
 
-async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
+export async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
     console.log('Checking eligibility for FID:', fromFid);
 
     // First, check if the FID exists in the fids object
@@ -197,20 +197,36 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    const { address } = req.query;
+    const { address, fid } = req.query;
 
-    if (!address || typeof address !== 'string') {
-        return res.status(400).json({ error: 'Address is required' });
+    if (!address && !fid) {
+        return res.status(400).json({ error: 'Either address or FID is required' });
+    }
+
+    if (address && fid) {
+        return res.status(400).json({ error: 'Provide either address or FID, not both' });
     }
 
     try {
-        const fid = await getFidFromNeynar(address);
+        let userFid: number;
 
-        if (!fid) {
-            return res.status(404).json({ error: 'FID not found for the given address' });
+        if (address) {
+            if (typeof address !== 'string') {
+                return res.status(400).json({ error: 'Invalid address format' });
+            }
+            const fetchedFid = await getFidFromNeynar(address);
+            if (!fetchedFid) {
+                return res.status(404).json({ error: 'FID not found for the given address' });
+            }
+            userFid = fetchedFid;
+        } else {
+            if (typeof fid !== 'string' || !/^\d+$/.test(fid)) {
+                return res.status(400).json({ error: 'Invalid FID format' });
+            }
+            userFid = parseInt(fid, 10);
         }
 
-        const isEligible = await checkEligibility(fid);
+        const isEligible = await checkEligibility(userFid);
 
         if (isEligible === undefined) {
             return res.status(500).json({ error: 'Error checking eligibility' });

@@ -4,6 +4,7 @@ import { User, getUserById } from '~/server/neynar';
 import { stack } from '~/server/stack'
 import { checkWhitelist } from './functions/checkWhiteList';
 import { UserType } from '@prisma/client';
+import { checkEligibility } from './checkEligibility';
 
 export function getStartOfWeek(): Date {
     const now = new Date();
@@ -78,30 +79,30 @@ export default async function handler(
             const details = await getUserById(numericFid)
 
             if (details && details.verified_addresses.eth_addresses[0]) {
-                const userEligibility: UserType | 'NOT_WHITELISTED' = await checkWhitelist(numericFid, details.verified_addresses.eth_addresses[0], details.power_badge)
+                const userEligibility: boolean | undefined = await checkEligibility(numericFid)
 
                 console.log(userEligibility)
 
-                if (userEligibility !== 'NOT_WHITELISTED') {
-                    let totalAllowance: number;
-                    let invitesLeft: number;
+                if (userEligibility) {
+                    const totalAllowance = 300;
+                    const invitesLeft = 0;
 
-                    if (userEligibility == "ALLIES") {
-                        totalAllowance = 500
-                        invitesLeft = 3
-                    } else if (userEligibility == "SPLITTERS") {
-                        totalAllowance = 100
-                        invitesLeft = 3
-                    } else if (userEligibility == "POWER_BADGE") {
-                        totalAllowance = 300
-                        invitesLeft = 0
-                    } else if (userEligibility == "FOLLOWER") {
-                        totalAllowance = 25
-                        invitesLeft = 0
-                    } else {
-                        totalAllowance = 0
-                        invitesLeft = 0
-                    }
+                    // if (userEligibility == "ALLIES") {
+                    //     totalAllowance = 500
+                    //     invitesLeft = 3
+                    // } else if (userEligibility == "SPLITTERS") {
+                    //     totalAllowance = 100
+                    //     invitesLeft = 3
+                    // } else if (userEligibility == "POWER_BADGE" || userEligibility == "WHITELISTED") {
+                    //     totalAllowance = 300
+                    //     invitesLeft = 0
+                    // } else if (userEligibility == "FOLLOWER") {
+                    //     totalAllowance = 25
+                    //     invitesLeft = 0
+                    // } else {
+                    //     totalAllowance = 0
+                    //     invitesLeft = 0
+                    // }
 
                     response = {
                         ...response,

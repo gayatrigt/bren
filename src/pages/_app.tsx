@@ -6,7 +6,7 @@ import { RainbowWalletProvider } from "~/utils/rainbowConfig";
 import Layout from "~/components/layout";
 import Head from 'next/head';
 
-const MyApp: AppType = ({ Component, pageProps }) => {
+const MyApp: AppType<{ excludeNavbar: boolean }> = ({ Component, pageProps }) => {
   return (
     <RainbowWalletProvider>
       <Head>
@@ -17,9 +17,9 @@ const MyApp: AppType = ({ Component, pageProps }) => {
         <meta property="og:type" content="" />
         <meta property="og:image" content="" />
       </Head>
-      <Layout>
+      {pageProps.excludeNavbar ? <Component {...pageProps} /> : <Layout>
         <Component {...pageProps} />
-      </Layout>
+      </Layout>}
     </RainbowWalletProvider>
   );
 };
