@@ -66,7 +66,7 @@ export default async function handler(
         // For local testing, use localhost. For production, use your actual domain.
         const baseUrl = 'https://www.bren.lol/action';
 
-        let url = new URL(baseUrl);
+        const url = new URL(baseUrl);
         url.searchParams.append('fid', fid.toString());
 
         if (decodedState?.cast) {
@@ -80,12 +80,12 @@ export default async function handler(
 
         console.log('Constructed URL:', url.toString());
 
-        res.status(200).json({
+        return res.status(200).json({
             type: 'form',
             title: 'Bren',
             url: url.toString(),
         });
-    } else {
-        return res.status(405).end(); // Method Not Allowed
     }
+
+    return res.status(405).end(); // Method Not Allowed
 }
