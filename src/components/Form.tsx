@@ -52,7 +52,8 @@ const Form: React.FC<FormProps> = ({ allowanceLeft, text, parent }) => {
         type: "createCast",
         data: {
           cast: {
-            text: `[mention user] ${tipAmount} $bren ${mappedValues}`,
+            ...(parent && { parent: parent }),
+            text: `${text} [mention user] ${tipAmount} $bren ${mappedValues}`,
             embeds: []
           }
         }

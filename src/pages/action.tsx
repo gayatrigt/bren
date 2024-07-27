@@ -36,7 +36,9 @@ const Home: NextPage<HomeProps> = ({ userDetails, excludeNavbar, error, text, pa
         type: "createCast",
         data: {
           cast: {
-            castData
+            ...(parent && { parent: parent }),
+            text: `${text} Can I get an invite for bren @yele.eth @gayatri`,
+            embeds: []
           }
         }
       }, "*");
