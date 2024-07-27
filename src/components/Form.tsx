@@ -41,6 +41,7 @@ const Form: React.FC<FormProps> = ({ allowanceLeft, text, parent }) => {
 
       const castData: any = {
         text: castText,
+        embeds: [], // Add this line to include the required 'embeds' array
       };
 
       if (parent) {
@@ -48,9 +49,9 @@ const Form: React.FC<FormProps> = ({ allowanceLeft, text, parent }) => {
       }
 
       window.parent.postMessage({
-        type: "createCast",
+        type: "Cast",
         data: {
-          cast: { castData }
+          cast: castData
         }
       }, "*");
     } catch (error) {
