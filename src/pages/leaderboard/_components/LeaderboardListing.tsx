@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { FaChevronDown } from "react-icons/fa6";
 import { useAccount } from "wagmi";
 import {
@@ -19,11 +19,10 @@ const PaginationButton: React.FC<{
 }> = ({ page, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`h-8 w-8 rounded-full border text-sm font-medium ${
-      isActive
-        ? "border-purple-800 bg-purple-800 text-white"
-        : "border-gray-300 bg-transparent text-gray-600 hover:bg-gray-100"
-    } mx-0.5`} // Added mx-0.5 for closer spacing
+    className={`h-8 w-8 rounded-full border text-sm font-medium ${isActive
+      ? "border-purple-800 bg-purple-800 text-white"
+      : "border-gray-300 bg-transparent text-gray-600 hover:bg-gray-100"
+      } mx-0.5`} // Added mx-0.5 for closer spacing
   >
     {page}
   </button>
@@ -54,9 +53,31 @@ const LeaderboardListing: React.FC = () => {
     totalItems: 0,
     itemsPerPage: 20,
   });
+  const [filteredRankings, setFilteredRankings] = useState<EnrichedRankingData[]>([]);
+  const [filteredPagination, setFilteredPagination] = useState<Pagination>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 20,
+  });
+  const [allRankings, setAllRankings] = useState<EnrichedRankingData[]>([]);
+  const [displayedRankings, setDisplayedRankings] = useState<EnrichedRankingData[]>([]);
 
   const [userRanking, setUserRanking] = useState<UserRank | null>(null);
   const { address } = useAccount();
+
+  const filterAndSortRankings = useCallback((rankings: EnrichedRankingData[]) => {
+    return rankings
+      .filter((ranking) => {
+        const metric = ranking[selectedTab?.key as keyof Rankings];
+        return metric !== 0 && metric !== null;
+      })
+      .sort((a, b) => {
+        const metricA = a[selectedTab?.key as keyof Rankings] as number;
+        const metricB = b[selectedTab?.key as keyof Rankings] as number;
+        return metricB - metricA;
+      });
+  }, [selectedTab]);
 
   const fetchUserRanking = async () => {
     if (!address) return;
@@ -95,15 +116,51 @@ const LeaderboardListing: React.FC = () => {
       const userData: { users: User[] } = await userResponse.json();
 
       // Combine ranking data with user details
-      const enrichedRankings: EnrichedRankingData[] = data.data.map(
-        (ranking) => ({
-          ...ranking,
-          userDetails: userData.users.find((user) => user.fid === ranking.fid),
-        }),
-      );
+      const enrichedRankings: EnrichedRankingData[] = data.data.map((ranking) => ({
+        ...ranking,
+        userDetails: userData.users.find((user) => user.fid === ranking.fid),
+      }));
 
-      setRankings(enrichedRankings);
-      setPagination(data.pagination);
+      const filteredAndSortedRankings = filterAndSortRankings(enrichedRankings);
+      setAllRankings(filteredAndSortedRankings);
+
+      let userRankingIndex = -1;
+      const rankingsWithoutCurrentUser = filteredAndSortedRankings.filter((ranking, index) => {
+        if (ranking.walletAddress.toLowerCase() === address?.toLowerCase()) {
+          userRankingIndex = index;
+          return false;
+        }
+        return true;
+      });
+
+      // Assign continuous ranks to displayed rankings
+      const displayedRankingsWithRanks = rankingsWithoutCurrentUser.map((ranking, index) => ({
+        ...ranking,
+        displayRank: index >= userRankingIndex ? index + 2 : index + 1
+      }));
+
+      setDisplayedRankings(displayedRankingsWithRanks);
+
+      // Update pagination based on displayed rankings
+      const newTotalItems = displayedRankingsWithRanks.length;
+      const newTotalPages = Math.ceil(newTotalItems / pagination.itemsPerPage);
+      setFilteredPagination({
+        ...pagination,
+        totalItems: newTotalItems,
+        totalPages: newTotalPages,
+        currentPage: Math.min(currentPage, newTotalPages),
+      });
+
+      // Set user ranking
+      if (userRankingIndex !== -1) {
+        setUserRanking({
+          ...filteredAndSortedRankings[userRankingIndex],
+          rank: userRankingIndex + 1,
+        } as UserRank);
+      } else {
+        setUserRanking(null);
+      }
+
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -131,13 +188,14 @@ const LeaderboardListing: React.FC = () => {
     fetchData();
   }, [selectedTab, currentPage, pagination.itemsPerPage]);
 
-  const maxVisiblePages = 5;
+  // Adjust page numbers calculation based on filtered pagination
+  const maxVisiblePages = 15;
   const halfVisiblePages = Math.floor(maxVisiblePages / 2);
 
-  let startPage = Math.max(currentPage - halfVisiblePages, 1);
+  let startPage = Math.max(filteredPagination.currentPage - halfVisiblePages, 1);
   const endPage = Math.min(
     startPage + maxVisiblePages - 1,
-    pagination.totalPages,
+    filteredPagination.totalPages
   );
 
   if (endPage - startPage + 1 < maxVisiblePages) {
@@ -146,7 +204,7 @@ const LeaderboardListing: React.FC = () => {
 
   const pageNumbers = Array.from(
     { length: endPage - startPage + 1 },
-    (_, i) => startPage + i,
+    (_, i) => startPage + i
   );
 
   const handlePageChange = (newPage: number) => {
@@ -210,7 +268,7 @@ const LeaderboardListing: React.FC = () => {
             <div className="py-4 text-center">Loading...</div>
           ) : (
             <>
-              {currentPage === 1 && userRanking && (
+              {filteredPagination.currentPage === 1 && userRanking && userRanking[selectedTab?.key as keyof UserRank] !== 0 && (
                 <div
                   className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 border-2 border-purple-500 bg-purple-50 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
                   key={userRanking.fid}
@@ -265,73 +323,78 @@ const LeaderboardListing: React.FC = () => {
                   </p>
                 </div>
               )}
-              {rankings.map((ranking, index) => {
-                const rankNumber =
-                  (currentPage - 1) * pagination.itemsPerPage + index + 1;
-                return (
-                  <div
-                    className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
-                    key={ranking.fid}
-                  >
-                    <h1 className="text-center text-xs text-B-60 lg:text-lg">
-                      {String(rankNumber).padStart(2, "0")}
-                    </h1>
-                    <div className="w-full">
-                      <a
-                        href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex justify-center"
-                      >
-                        {ranking.userDetails?.pfp_url ? (
-                          <img
-                            alt="Profile"
-                            src={ranking.userDetails.pfp_url}
-                            className="h-8 w-8 rounded-full object-cover"
-                          />
-                        ) : (
-                          <Image
-                            layout="fill"
-                            alt="Profile"
-                            src="/icons/profile_icon.svg"
-                          />
-                        )}
-                      </a>
-                    </div>
-                    <div className="flex w-full items-center gap-2 overflow-hidden">
-                      <div className="relative h-[14px] w-[14px] lg:h-[22px] lg:w-[22px]">
-                        <Image
-                          src="/icons/bolt_circle.svg"
-                          alt="Bolt"
-                          layout="fill"
-                        />
+              {displayedRankings
+                .slice(
+                  (filteredPagination.currentPage - 1) * filteredPagination.itemsPerPage,
+                  filteredPagination.currentPage * filteredPagination.itemsPerPage
+                )
+                .map((ranking, index) => {
+                  const rankNumber =
+                    (filteredPagination.currentPage - 1) * filteredPagination.itemsPerPage + index + 1;
+                  return (
+                    <div
+                      className="grid w-full grid-cols-[40px_60px_1fr_90px] items-center gap-4 px-3 py-2.5 lg:grid-cols-[60px_200px_1fr_284px] lg:gap-20 lg:px-8 lg:py-5"
+                      key={ranking.fid}
+                    >
+                      <h1 className="text-center text-xs text-B-60 lg:text-lg">
+                        {String(ranking.displayRank).padStart(2, "0")}
+                      </h1>
+                      <div className="w-full">
+                        <a
+                          href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex justify-center"
+                        >
+                          {ranking.userDetails?.pfp_url ? (
+                            <img
+                              alt="Profile"
+                              src={ranking.userDetails.pfp_url}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <Image
+                              layout="fill"
+                              alt="Profile"
+                              src="/icons/profile_icon.svg"
+                            />
+                          )}
+                        </a>
                       </div>
-                      <a
-                        href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate text-xs text-B-60 lg:text-lg"
-                      >
-                        {ranking.userDetails?.username ||
-                          `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
-                      </a>
+                      <div className="flex w-full items-center gap-2 overflow-hidden">
+                        <div className="relative h-[14px] w-[14px] lg:h-[22px] lg:w-[22px]">
+                          <Image
+                            src="/icons/bolt_circle.svg"
+                            alt="Bolt"
+                            layout="fill"
+                          />
+                        </div>
+                        <a
+                          href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate text-xs text-B-60 lg:text-lg"
+                        >
+                          {ranking.userDetails?.username ||
+                            `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
+                        </a>
+                      </div>
+                      <p className="text-center text-xs text-B-60 lg:text-base">
+                        {(ranking[
+                          selectedTab?.key as keyof EnrichedRankingData
+                        ] as number) || 0}
+                      </p>
                     </div>
-                    <p className="text-center text-xs text-B-60 lg:text-base">
-                      {(ranking[
-                        selectedTab?.key as keyof EnrichedRankingData
-                      ] as number) || 0}
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </>
           )}
         </div>
       </div>
       {/* Pagination */}
       <div className="mt-4 flex items-center justify-between">
-        {pagination.totalPages > 1 && (
-          <div className="flex">
+        {filteredPagination.totalPages > 1 && (
+          <div className="flex items-center">
             {startPage > 1 && (
               <>
                 <PaginationButton
@@ -339,7 +402,7 @@ const LeaderboardListing: React.FC = () => {
                   isActive={false}
                   onClick={() => handlePageChange(1)}
                 />
-                {startPage > 2 && <span className="text-gray-500">...</span>}
+                {startPage > 2 && <span className="mx-1">...</span>}
               </>
             )}
 
@@ -347,27 +410,25 @@ const LeaderboardListing: React.FC = () => {
               <PaginationButton
                 key={page}
                 page={page}
-                isActive={page === currentPage}
+                isActive={page === filteredPagination.currentPage}
                 onClick={() => handlePageChange(page)}
               />
             ))}
 
-            {endPage < pagination.totalPages && (
+            {endPage < filteredPagination.totalPages && (
               <>
-                {endPage < pagination.totalPages - 1 && (
-                  <span className="text-gray-500">...</span>
-                )}
+                {endPage < filteredPagination.totalPages - 1 && <span className="mx-1">...</span>}
                 <PaginationButton
-                  page={pagination.totalPages}
+                  page={filteredPagination.totalPages}
                   isActive={false}
-                  onClick={() => handlePageChange(pagination.totalPages)}
+                  onClick={() => handlePageChange(filteredPagination.totalPages)}
                 />
               </>
             )}
           </div>
         )}
         <span className="ml-4 text-sm text-gray-500">
-          {`${(currentPage - 1) * pagination.itemsPerPage + 1}-${Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of ${pagination.totalItems}`}
+          {`${(filteredPagination.currentPage - 1) * filteredPagination.itemsPerPage + 1}-${Math.min(filteredPagination.currentPage * filteredPagination.itemsPerPage, filteredPagination.totalItems)} of ${filteredPagination.totalItems}`}
         </span>
       </div>
     </div>

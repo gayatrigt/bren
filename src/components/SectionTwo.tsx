@@ -46,6 +46,7 @@ export interface User {
 export interface EnrichedRankingData extends RankingData {
   userDetails?: User;
   rank?: number;
+  displayRank?: number;
 }
 
 export interface UserRank {
