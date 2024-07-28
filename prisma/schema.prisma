@@ -60,7 +60,7 @@ model Invite {
 model BotReply {
   repliedAt    DateTime @default(now())
   botcastHash  String   @unique
-  userCastHash String   @unique
+  userCastHash String?  @unique
 }
 
 enum UserType {

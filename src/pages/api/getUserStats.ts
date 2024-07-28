@@ -31,7 +31,7 @@ async function getUserRank(fid: number) {
     }
 }
 
-async function getUserAllowance(wallet: string): Promise<number> {
+export async function getUserAllowance(wallet: string): Promise<number> {
     const allowance: number = await stack.getPoints(wallet);
     return allowance
 }

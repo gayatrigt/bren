@@ -3,5 +3,12 @@
         "pages/api/**/*.ts": {
             "maxDuration": 300
         }
-    }
+    },
+    "version": 2,
+    "crons": [
+        {
+            "path": "/api/botReminder",
+            "schedule": "0 0 * * 0"
+        }
+    ]
 }
