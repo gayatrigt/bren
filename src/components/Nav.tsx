@@ -62,7 +62,9 @@ const Nav = () => {
         <nav className="mx-auto w-full lg:max-w-[1600px]">
           <div className="flex items-center justify-between px-5 pb-3 pt-5 lg:px-[60px] lg:pt-6">
             <div className="flex items-center space-x-3">
-              <Hamburger open={showMenu} action={openMenu} />
+              <div className="lg:hidden">
+                <Hamburger open={showMenu} action={openMenu} />
+              </div>
               <div className="relative h-[24px] w-[60px] lg:h-[30px] lg:w-[90px] ">
                 <Image layout="fill" src="/icons/logo.svg" alt="Bren" />
               </div>
@@ -106,9 +108,9 @@ const Nav = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -5 }}
             transition={{ type: "easeOut" }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex h-screen w-full flex-col bg-white pb-14 lg:hidden"
+            className="fixed bottom-0 left-0 right-0 top-0 z-50 flex h-screen w-full flex-col bg-white pb-14 lg:hidden"
           >
-            <div className="flex items-center space-x-5 bg-Y-100 px-5 pb-3 pt-6">
+            <div className="flex flex-shrink-0 items-center space-x-5 bg-Y-100 px-5 pb-3 pt-6">
               <Hamburger open={showMenu} action={closeMenu} />
 
               <h1 className="text-2xl text-pu-100">Menu</h1>
