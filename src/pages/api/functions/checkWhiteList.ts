@@ -1,6 +1,7 @@
 import { UserType } from "@prisma/client";
 import { NeynarChannel } from "~/contracts/NeynarChannel";
 import { db } from "~/server/db";
+import { checkEligibility } from "../checkEligibility";
 
 interface NeynarWebhook {
     data: {
@@ -50,6 +51,10 @@ async function checkWhitelist(fid: number, walletAddress: string, isPowerBadge: 
             return UserType.INVITED;
         }
 
+        const isWhitelisted = await checkEligibility(fid);
+        if (isWhitelisted) {
+            return UserType.WHITELISTED
+        }
         // 5. If none of the above, return not whitelisted
         return 'NOT_WHITELISTED';
 

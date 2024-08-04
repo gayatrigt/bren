@@ -79,34 +79,35 @@ export default async function handler(
             const details = await getUserById(numericFid)
 
             if (details && details.verified_addresses.eth_addresses[0]) {
-                const userEligibility: boolean | undefined = await checkEligibility(numericFid)
 
-                console.log(userEligibility)
+                const isWhitelist = await checkWhitelist(numericFid, details.verified_addresses.eth_addresses[0], details.power_badge)
 
-                if (userEligibility) {
-                    const totalAllowance = 300;
-                    const invitesLeft = 0;
+                console.log(isWhitelist)
 
-                    // if (userEligibility == "ALLIES") {
-                    //     totalAllowance = 500
-                    //     invitesLeft = 3
-                    // } else if (userEligibility == "SPLITTERS") {
-                    //     totalAllowance = 100
-                    //     invitesLeft = 3
-                    // } else if (userEligibility == "POWER_BADGE" || userEligibility == "WHITELISTED") {
-                    //     totalAllowance = 300
-                    //     invitesLeft = 0
-                    // } else if (userEligibility == "FOLLOWER") {
-                    //     totalAllowance = 25
-                    //     invitesLeft = 0
-                    // } else {
-                    //     totalAllowance = 0
-                    //     invitesLeft = 0
-                    // }
+                if (isWhitelist) {
+                    let totalAllowance = 300;
+                    let invitesLeft = 0;
+
+                    if (isWhitelist == "ALLIES") {
+                        totalAllowance = 500
+                        invitesLeft = 3
+                    } else if (isWhitelist == "SPLITTERS") {
+                        totalAllowance = 100
+                        invitesLeft = 3
+                    } else if (isWhitelist == "POWER_BADGE" || isWhitelist == "WHITELISTED") {
+                        totalAllowance = 300
+                        invitesLeft = 0
+                    } else if (isWhitelist == "FOLLOWER") {
+                        totalAllowance = 25
+                        invitesLeft = 0
+                    } else if (isWhitelist == "NOT_WHITELISTED") {
+                        totalAllowance = 0
+                        invitesLeft = 0
+                    }
 
                     response = {
                         ...response,
-                        userType: userEligibility,
+                        userType: isWhitelist,
                         weeklyAllowanceLeft: totalAllowance,
                         totalAllowance,
                         recentInviteesPfps: [],

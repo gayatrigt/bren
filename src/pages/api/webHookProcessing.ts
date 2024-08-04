@@ -123,83 +123,15 @@ export async function processWebhookData(hash: string) {
 
         }
 
-        // {
-        //     console.log('New user detected');
-        //     // Perform actions for new user, e.g., create a new user record
-
-        //     const isPowerBadge = neynarCast.author.power_badge
-
-        //     const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
-
-        //     if (result === 'NOT_WHITELISTED') {
-        //         console.log('User is not whitelisted');
-
-        //         const result = await botReply(
-        //             castHash,
-        //             `Hey ${fromUsername}! You are not eligible to tip $bren`,
-        //             `Your tip failed as you are not eligible`
-        //         );
-
-        //         if (result.success) {
-        //             console.log('Reply posted successfully:', result.castHash);
-        //         } else {
-        //             console.error('Failed to post reply:', result.message);
-        //         }
-
-        //     } else {
-        //         console.log(`User is whitelisted as ${result}`);
-
-        //         try {
-        //             const newUser = await db.user.create({
-        //                 data: {
-        //                     walletAddress: fromAddress,
-        //                     fid: fromFid,
-        //                     display_name: neynarCast.author.display_name,
-        //                     username: fromUsername,
-        //                     pfp: neynarCast.author.pfp_url,
-        //                     isAllowanceGiven: false,
-        //                     type: result
-        //                 },
-        //             });
-
-        //             console.log(`New user created successfully. FID: ${fromFid}`);
-
-        //         } catch (error) {
-        //             console.error(`Error creating new user. FID: ${fromFid}`, error);
-        //         }
-
-        //         try {
-        //             await setUserAllowance(fromFid, fromAddress, result);
-        //             console.log('Allowance set and database updated successfully');
-        //         } catch (error) {
-        //             console.error('Failed to set allowance:', error);
-        //         }
-
-        //         const currentAllowance = await getUserCurrentAllowance(fromAddress);
-
-        //         await processTip(
-        //             tipAmount,
-        //             currentAllowance,
-        //             fromFid,
-        //             fromAddress,
-        //             fromUsername,
-        //             toFid,
-        //             message,
-        //             hashtagValue,
-        //             castHash,
-        //             neynarCast
-        //         );
-
-        //     }
-        // }
-
-        else {
+        {
             console.log('New user detected');
             // Perform actions for new user, e.g., create a new user record
 
-            const result = await checkEligibility(fromFid);
+            const isPowerBadge = neynarCast.author.power_badge
 
-            if (!result) {
+            const result = await checkWhitelist(fromFid, fromAddress, isPowerBadge);
+
+            if (result === 'NOT_WHITELISTED') {
                 console.log('User is not whitelisted');
 
                 const result = await botReply(
@@ -214,7 +146,7 @@ export async function processWebhookData(hash: string) {
                     console.error('Failed to post reply:', result.message);
                 }
 
-            } else if (result) {
+            } else {
                 console.log(`User is whitelisted as ${result}`);
 
                 try {
@@ -226,7 +158,7 @@ export async function processWebhookData(hash: string) {
                             username: fromUsername,
                             pfp: neynarCast.author.pfp_url,
                             isAllowanceGiven: false,
-                            type: 'WHITELISTED'
+                            type: result
                         },
                     });
 
@@ -237,7 +169,7 @@ export async function processWebhookData(hash: string) {
                 }
 
                 try {
-                    await setUserAllowance(fromFid, fromAddress, 'WHITELISTED');
+                    await setUserAllowance(fromFid, fromAddress, result);
                     console.log('Allowance set and database updated successfully');
                 } catch (error) {
                     console.error('Failed to set allowance:', error);
@@ -260,6 +192,74 @@ export async function processWebhookData(hash: string) {
 
             }
         }
+
+        // else {
+        //     console.log('New user detected');
+        //     // Perform actions for new user, e.g., create a new user record
+
+        //     const result = await checkEligibility(fromFid);
+
+        //     if (!result) {
+        //         console.log('User is not whitelisted');
+
+        //         const result = await botReply(
+        //             castHash,
+        //             `Hey ${fromUsername}! You are not eligible to tip $bren`,
+        //             `Your tip failed as you are not eligible`
+        //         );
+
+        //         if (result.success) {
+        //             console.log('Reply posted successfully:', result.castHash);
+        //         } else {
+        //             console.error('Failed to post reply:', result.message);
+        //         }
+
+        //     } else if (result) {
+        //         console.log(`User is whitelisted as ${result}`);
+
+        //         try {
+        //             const newUser = await db.user.create({
+        //                 data: {
+        //                     walletAddress: fromAddress,
+        //                     fid: fromFid,
+        //                     display_name: neynarCast.author.display_name,
+        //                     username: fromUsername,
+        //                     pfp: neynarCast.author.pfp_url,
+        //                     isAllowanceGiven: false,
+        //                     type: 'WHITELISTED'
+        //                 },
+        //             });
+
+        //             console.log(`New user created successfully. FID: ${fromFid}`);
+
+        //         } catch (error) {
+        //             console.error(`Error creating new user. FID: ${fromFid}`, error);
+        //         }
+
+        //         try {
+        //             await setUserAllowance(fromFid, fromAddress, 'WHITELISTED');
+        //             console.log('Allowance set and database updated successfully');
+        //         } catch (error) {
+        //             console.error('Failed to set allowance:', error);
+        //         }
+
+        //         const currentAllowance = await getUserCurrentAllowance(fromAddress);
+
+        //         await processTip(
+        //             tipAmount,
+        //             currentAllowance,
+        //             fromFid,
+        //             fromAddress,
+        //             fromUsername,
+        //             toFid,
+        //             message,
+        //             hashtagValue,
+        //             castHash,
+        //             neynarCast
+        //         );
+
+        //     }
+        // }
 
     } catch (error) {
         console.error('Error in processWebhookData:', error);

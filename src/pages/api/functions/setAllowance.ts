@@ -2,7 +2,6 @@ import { UserType } from "@prisma/client";
 import { db } from "~/server/db";
 import { stack } from "~/server/stack";
 
-
 export async function setUserAllowance(fid: number, walletAddress: string, userType: UserType): Promise<void> {
     try {
         console.log("🚀 ~ setUserAllowance ~ userType:", userType)
@@ -20,39 +19,38 @@ export async function setUserAllowance(fid: number, walletAddress: string, userT
                 allowancePoints = 300;
                 break;
             case UserType.SPLITTERS:
-                allowancePoints = 100;
+                allowancePoints = 300;
                 break;
             case UserType.INVITED:
-                // // Check the invite details from the database
-                // const invites = await db.invite.findMany({
-                //     where: { inviteeFid: fid },
-                //     orderBy: { createdAt: 'asc' }, // Order by creation date, oldest first
-                //     take: 1 // Take only the first invite
-                // });
+                // Check the invite details from the database
+                const invites = await db.invite.findMany({
+                    where: { inviteeFid: fid },
+                    orderBy: { createdAt: 'asc' }, // Order by creation date, oldest first
+                    take: 1 // Take only the first invite
+                });
 
-                // if (invites.length === 0) {
-                //     throw new Error('No invite found for this user');
-                // }
+                if (invites.length === 0) {
+                    throw new Error('No invite found for this user');
+                }
 
-                // const firstInvite = invites[0];
+                const firstInvite = invites[0];
 
-                // // Fetch the invitor's information
-                // const invitor = await db.user.findUnique({
-                //     where: { fid: firstInvite?.invitorFid }
-                // });
+                // Fetch the invitor's information
+                const invitor = await db.user.findUnique({
+                    where: { fid: firstInvite?.invitorFid }
+                });
 
-                // if (!invitor) {
-                //     throw new Error('Invitor not found');
-                // }
+                if (!invitor) {
+                    throw new Error('Invitor not found');
+                }
 
-                // if (invitor.type === UserType.ALLIES) {
-                //     allowancePoints = 50;
-                // } else if (invitor.type === UserType.SPLITTERS) {
-                //     allowancePoints = 25;
-                // } else {
-                //     throw new Error('Invalid invitor type');
-                // }
-                allowancePoints = 300
+                if (invitor.type === UserType.ALLIES) {
+                    allowancePoints = 200;
+                } else if (invitor.type === UserType.SPLITTERS) {
+                    allowancePoints = 100;
+                } else {
+                    throw new Error('Invalid invitor type');
+                }
                 break;
             case UserType.FOLLOWER:
                 allowancePoints = 20;
