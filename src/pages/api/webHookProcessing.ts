@@ -123,7 +123,7 @@ export async function processWebhookData(hash: string) {
 
         }
 
-        {
+        else if (!userExists) {
             console.log('New user detected');
             // Perform actions for new user, e.g., create a new user record
 
@@ -326,7 +326,6 @@ async function getRecipientFid(neynarCast: Cast): Promise<number> {
     if (neynarCast.parent_author?.fid) {
         return neynarCast.parent_author.fid;
     }
-
 
     if (!!neynarCast.mentioned_profiles.length) {
         // If no parent author, check mentioned profiles
