@@ -53,7 +53,15 @@ const Home: NextPage<HomeProps> = ({ userDetails, excludeNavbar, error, text, pa
     <>
       <section className="w-full">
         <div className="min-h-screen overflow-hidden w-full bg-Y-100 flex flex-col items-center">
-          <img src="/icons/logo.svg" alt="Logo" className="w-24 h-24 mb-8" />
+          <img src="/icons/logo.svg" alt="Logo" className="w-24 h-24 mb-4" />
+          <h1 className="text-4xl text-center font-bold">
+            Recognize your
+            Base frens
+          </h1>
+          <span className="text-base text-center mb-6">
+            Select the points from your allowance and a value that you want to reward.
+            <br /> You can then tag the person in the cast and make them feel appreciated!
+          </span>
           {error ? (
             <div className="text-center text-pu-100 justify-center flex flex-col items-center">
               <h2 className="text-xl font-bold mb-4">You are not Whitelisted to tip</h2>
