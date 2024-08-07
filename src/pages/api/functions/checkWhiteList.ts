@@ -39,11 +39,11 @@ async function checkWhitelist(fid: number, walletAddress: string, isPowerBadge: 
             return UserType.POWER_BADGE;
         }
 
-        // 3. Check if follows bren
-        const followsBren = await checkIfFollowsBrenChannel(fid);
-        if (followsBren === 'bren') {
-            return UserType.FOLLOWER;
-        }
+        // // 3. Check if follows bren
+        // const followsBren = await checkIfFollowsBrenChannel(fid);
+        // if (followsBren === 'bren') {
+        //     return UserType.FOLLOWER;
+        // }
 
         // 4. Check if invited in database
         const isInvited = await checkIfInvited(fid, walletAddress);

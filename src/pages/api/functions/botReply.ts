@@ -145,6 +145,37 @@ export async function botReminder(username: string | null, fid: number): Promise
     }
 }
 
+export async function botclaim(username: string | null): Promise<BotReplyResult> {
+    try {
+
+        // Post the new reply
+        const response = await sdk.postCast({
+            signer_uuid: process.env.SIGNER_UUID,
+            text: `Hey @${username} you are earning $BUILD for being a bren!`,
+            embeds: [
+                {
+                    url: `https://bren-frames.vercel.app/frames}`
+                }
+            ],
+        }, { api_key: process.env.NEYNAR_API_KEY });
+
+        const castHash = response.data.cast.hash;
+
+        return {
+            success: true,
+            message: "Reply posted successfully.",
+            castHash: castHash
+        };
+
+    } catch (error) {
+        console.error('Error in botReply:', error);
+        return {
+            success: false,
+            message: "An error occurred while posting the reply."
+        };
+    }
+}
+
 
 export async function botReply(userHash: string, castText: string, message: string): Promise<BotReplyResult> {
     try {
