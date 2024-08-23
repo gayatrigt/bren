@@ -130,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                     console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
                     try {
-                        const response = await fetch('http://localhost:3000/api/processTGTip', {
+                        const response = await fetch('https://www.bren.lol/api/processTGTip', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
