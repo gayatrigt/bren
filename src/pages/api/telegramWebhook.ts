@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import { db } from '~/server/db';
-import { processTip } from './processTGTip';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
@@ -95,6 +94,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const fromUser = message.from?.username;
             const fromUserid = message.from?.id
             const messageId = message.message_id.toString();
+            const chatId = message.chat.id;
+            const chatName = message.chat.title || 'Private Chat';
 
             console.log("parsed", message, fromUser)
 
@@ -104,10 +105,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 console.log("tip", tipInfo)
 
                 if (fromUser && tipInfo) {
-                    processTip(fromUser, fromUserid, message.from?.first_name, message.from?.last_name, tipInfo.recipient, tipInfo.amount, message.message_id.toString(), message.chat.id, message.chat?.title)
-                        .catch(error => console.error('Error processing tip:', error));
-                } else {
-                    console.error('Invalid tip format or missing user information');
+                    console.log('Tip info parsed successfully. Calling processTip API...');
+                    try {
+                        const response = await fetch('/api/process-tip', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                fromUsername: fromUser.username,
+                                fromUserid: fromUser.id,
+                                first_name: fromUser.first_name,
+                                last_name: fromUser.last_name,
+                                toUsername: tipInfo.recipient,
+                                amount: tipInfo.amount,
+                                messageId,
+                                chatId,
+                                chatName
+                            }),
+                        });
+
+                        if (response.ok) {
+                            console.log('Tip processed successfully.');
+                        } else {
+                            console.error('Error processing tip:', await response.text());
+                        }
+                    } catch (error) {
+                        console.error('Error calling processTip API:', error);
+                    }
                 }
             }
         }
