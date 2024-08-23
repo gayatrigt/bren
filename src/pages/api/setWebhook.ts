@@ -9,12 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Check for secret key in the request headers
-    const providedKey = req.headers['x-webhook-secret'];
-    if (providedKey !== SECRET_KEY) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     try {
         const result = await setWebhook();
         res.status(200).json({ message: 'Webhook set successfully', result });
