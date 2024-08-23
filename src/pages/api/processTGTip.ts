@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        console.log("Processing tip:", { fromUsername, toUsername, amount, chatId });
+        console.log("Processing tip:", { fromUsername, toUsername, amount, chatId, messageId });
 
         const fromUser = await db.userTG.findUnique({ where: { username: fromUsername } });
         const toUser = await db.userTG.findUnique({ where: { username: toUsername } });
@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             _sum: { amount: true },
         });
 
-        const remainingAllowance = 500 - (tipsSentThisWeek._sum.amount || 0);
+        const remainingAllowance = 1500 - (tipsSentThisWeek._sum.amount || 0);
         console.log("Remaining allowance:", remainingAllowance);
 
         if (amount <= remainingAllowance) {
@@ -118,18 +118,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
 
             console.log("Sending reaction...");
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setMessageReaction`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    message_id: messageId,
-                    reaction: [{ type: 'emoji', emoji: '👍' }],
-                    is_big: false
-                }),
-            });
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setMessageReaction`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        message_id: messageId,
+                        reaction: [{ type: 'emoji', emoji: '👍' }],
+                        is_big: false
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    console.error(`Error setting reaction. Status: ${response.status}, Response:`, errorData);
+                } else {
+                    console.log("Reaction sent successfully");
+                }
+            } catch (error) {
+                console.error("Error sending reaction:", error);
+            }
 
             console.log(`Tip processed: ${amount} $bren from @${fromUsername} to @${toUsername}`);
 

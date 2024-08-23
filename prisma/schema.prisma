@@ -34,8 +34,17 @@ model UserTG {
   sentTransactions TransactionTG[]
 }
 
+model ProcessedMessage {
+  chatId      String
+  messageId   String
+  processedAt DateTime @default(now())
+
+  @@id([chatId, messageId])
+  @@unique([chatId, messageId])
+}
+
 model TransactionTG {
-  messageid    String   @id
+  messageid    String   @id @unique
   fromUsername String
   groupid      Float?
   groupname    String?

@@ -5,6 +5,9 @@ import { db } from '~/server/db';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
+// In-memory cache for recent tips (this will reset on server restart)
+const recentTips = new Set<string>();
+
 export async function sendTelegramDM(userId: number, text: string) {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
@@ -55,38 +58,42 @@ function isBotMentioned(text: string): boolean {
 
 // Helper function to parse tip amount and recipient
 function parseTipMessage(text: string, replyToMessage: any): { amount: number, recipient: string } | null {
-    const match = text.match(/(\d+)\s+\$bren/i);
-    if (match && match[1]) {
-        const amount = parseInt(match[1], 10);
-        let recipient = '';
+    console.log("tip message", text, replyToMessage);
 
-        // If it's a reply, get the recipient from the replied-to message
-        if (replyToMessage && replyToMessage.from && replyToMessage.from.username) {
-            recipient = replyToMessage.from.username;
-        } else {
-            // If it's not a reply, try to find a mentioned username
-            const mentionMatch = text.match(/@(\w+)/);
-            if (mentionMatch && mentionMatch[1]) {
-                recipient = mentionMatch[1];
-            }
-        }
+    const match = text.match(/(?=.*\d)(?=.*\$bren)(?=.*@(\w+)).*/i);
 
-        if (recipient) {
-            return { amount, recipient };
-        }
+    console.log("match:", match);
+    if (!match || !match[1]) {
+        return null;
     }
-    return null;
+
+    const amountMatch = text.match(/(\d+)/);
+    const amount = amountMatch ? parseInt(amountMatch[0], 10) : 0;
+    let recipient = match[1];
+
+    // If it's a reply, get the recipient from the replied-to message
+    if (replyToMessage && replyToMessage.from && replyToMessage.from.username) {
+        recipient = replyToMessage.from.username;
+    }
+
+    // Ensure the recipient is not 'brenisbot'
+    if (recipient.toLowerCase() === 'brenisbot') {
+        return null;
+    }
+
+    return { amount, recipient };
 }
+
 
 // Main webhook handler
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
-        const update = req.body;
-
-        console.log("webhook received", update)
-
         // Acknowledge receipt immediately
         res.status(200).json({ ok: true });
+
+        const update = req.body;
+
+        console.log("webhook received 1", update)
 
         // Process the message asynchronously
         if (update.message && update.message.text) {
@@ -97,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const chatId = message.chat.id;
             const chatName = message.chat.title || 'Private Chat';
 
-            console.log("parsed", message, fromUser)
+            console.log("parsed 2", message, fromUser)
 
             if (isBotMentioned(message.text)) {
                 const tipInfo = parseTipMessage(message.text, message.reply_to_message);
@@ -105,18 +112,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 console.log("tip", tipInfo)
 
                 if (fromUser && tipInfo) {
-                    console.log('Tip info parsed successfully. Calling processTip API...');
+                    const tipKey = `${fromUser.username}-${tipInfo.recipient}-${tipInfo.amount}`;
+
+                    // Check if this tip has been processed recently
+                    if (recentTips.has(tipKey)) {
+                        console.log('Duplicate tip detected, skipping processing');
+                        return;
+                    }
+
+                    // Add to recent tips
+                    recentTips.add(tipKey);
+
+                    // Remove from recent tips after 10 seconds
+                    setTimeout(() => {
+                        recentTips.delete(tipKey);
+                    }, 10000);
+
+                    console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
                     try {
-                        const response = await fetch('/api/process-tip', {
+                        const response = await fetch('http://localhost:3000/api/processTGTip', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                fromUsername: fromUser.username,
-                                fromUserid: fromUser.id,
-                                first_name: fromUser.first_name,
-                                last_name: fromUser.last_name,
+                                fromUsername: fromUser,
+                                fromUserid: fromUserid,
+                                first_name: message.from.first_name,
+                                last_name: message.from.last_name,
                                 toUsername: tipInfo.recipient,
                                 amount: tipInfo.amount,
                                 messageId,
