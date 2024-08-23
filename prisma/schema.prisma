@@ -20,6 +20,33 @@ model User {
   sentTransactions Transaction[] @relation("FromUser")
 }
 
+model UserTG {
+  username         String          @id @unique
+  fid              Int?            @unique
+  display_name     String?
+  idTG             Float?
+  first_name       String?
+  last_name        String?
+  wallet           String?
+  pfp              String?
+  isAllowanceGiven Boolean?
+  allowanceGivenAt DateTime?       @default(now())
+  sentTransactions TransactionTG[]
+}
+
+model TransactionTG {
+  messageid    String   @id
+  fromUsername String
+  groupid      Float?
+  groupname    String?
+  toUsername   String
+  text         String
+  amount       Float
+  createdAt    DateTime @default(now())
+  value        String
+  fromUser     UserTG   @relation(fields: [fromUsername], references: [username])
+}
+
 model UserRankings {
   fid               Int    @id
   walletAddress     String @unique
@@ -27,6 +54,16 @@ model UserRankings {
   tipsSent          Float? @default(0)
   tipsReceivedCount Int?   @default(0)
   tipsSentCount     Int?   @default(0)
+}
+
+model UserRankingsTG {
+  username          String   @id
+  walletAddress     String?  @unique
+  tipsReceived      Float?   @default(0)
+  tipsSent          Float?   @default(0)
+  tipsReceivedCount Int?     @default(0)
+  tipsSentCount     Int?     @default(0)
+  lastUpdated       DateTime
 }
 
 model Transaction {
