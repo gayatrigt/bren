@@ -1,6 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
-import { db } from '~/server/db';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
@@ -89,7 +87,6 @@ function parseTipMessage(text: string, replyToMessage: any): { amount: number, r
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
         // Acknowledge receipt immediately
-        res.status(200).json({ ok: true });
 
         const update = req.body;
 
@@ -169,6 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         console.log({ response: response.json() })
 
+        return res.status(200).json({ ok: true });
     } else {
         res.status(405).json({ error: 'Method not allowed' });
     }
