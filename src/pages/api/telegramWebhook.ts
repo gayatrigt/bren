@@ -6,7 +6,7 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 // In-memory cache for recent tips (this will reset on server restart)
-const recentTips = new Set<string>();
+// const recentTips = new Set<string>();
 
 export async function sendTelegramDM(userId: number, text: string) {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -123,21 +123,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return;
         }
 
-        const tipKey = `${fromUser.username}-${tipInfo.recipient}-${tipInfo.amount}`;
+        // const tipKey = `${fromUser.username}-${tipInfo.recipient}-${tipInfo.amount}`;
 
-        // Check if this tip has been processed recently
-        if (recentTips.has(tipKey)) {
-            console.log('Duplicate tip detected, skipping processing');
-            return;
-        }
+        // // Check if this tip has been processed recently
+        // if (recentTips.has(tipKey)) {
+        //     console.log('Duplicate tip detected, skipping processing');
+        //     return;
+        // }
 
-        // Add to recent tips
-        recentTips.add(tipKey);
+        // // Add to recent tips
+        // recentTips.add(tipKey);
 
-        // Remove from recent tips after 10 seconds
-        setTimeout(() => {
-            recentTips.delete(tipKey);
-        }, 10000);
+        // // Remove from recent tips after 10 seconds
+        // setTimeout(() => {
+        //     recentTips.delete(tipKey);
+        // }, 10000);
 
         console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
 
