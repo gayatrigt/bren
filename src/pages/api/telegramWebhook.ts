@@ -96,68 +96,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log("webhook received 1", update)
 
         // Process the message asynchronously
-        if (update.message && update.message.text) {
-            const message = update.message;
-            const fromUser = message.from?.username;
-            const fromUserid = message.from?.id
-            const messageId = message.message_id.toString();
-            const chatId = message.chat.id;
-            const chatName = message.chat.title || 'Private Chat';
+        if (!update.message?.text) {
+            throw new Error("Could not find text ")
+        }
 
-            console.log("parsed 2", message, fromUser)
+        const message = update.message;
+        const fromUser = message.from?.username;
+        const fromUserid = message.from?.id
+        const messageId = message.message_id.toString();
+        const chatId = message.chat.id;
+        const chatName = message.chat.title || 'Private Chat';
 
-            if (isBotMentioned(message.text)) {
-                const tipInfo = parseTipMessage(message.text, message.reply_to_message);
+        console.log("parsed 2", message, fromUser)
 
-                console.log("tip", tipInfo)
+        if (!isBotMentioned(message.text)) {
+            console.log("Irrelevant Message")
+            return;
+        }
 
-                if (fromUser && tipInfo) {
-                    const tipKey = `${fromUser.username}-${tipInfo.recipient}-${tipInfo.amount}`;
+        const tipInfo = parseTipMessage(message.text, message.reply_to_message);
 
-                    // Check if this tip has been processed recently
-                    if (recentTips.has(tipKey)) {
-                        console.log('Duplicate tip detected, skipping processing');
-                        return;
-                    }
+        console.log("tip", tipInfo)
 
-                    // Add to recent tips
-                    recentTips.add(tipKey);
+        if (!(fromUser && tipInfo)) {
+            console.log("no relevant info")
+            return;
+        }
 
-                    // Remove from recent tips after 10 seconds
-                    setTimeout(() => {
-                        recentTips.delete(tipKey);
-                    }, 10000);
+        const tipKey = `${fromUser.username}-${tipInfo.recipient}-${tipInfo.amount}`;
 
-                    console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
-                    try {
-                        const response = await fetch('https://www.bren.lol/api/processTGTip', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                fromUsername: fromUser,
-                                fromUserid: fromUserid,
-                                first_name: message.from.first_name,
-                                last_name: message.from.last_name,
-                                toUsername: tipInfo.recipient,
-                                amount: tipInfo.amount,
-                                messageId,
-                                chatId,
-                                chatName
-                            }),
-                        });
+        // Check if this tip has been processed recently
+        if (recentTips.has(tipKey)) {
+            console.log('Duplicate tip detected, skipping processing');
+            return;
+        }
 
-                        if (response.ok) {
-                            console.log('Tip processed successfully.');
-                        } else {
-                            console.error('Error processing tip:', await response.text());
-                        }
-                    } catch (error) {
-                        console.error('Error calling processTip API:', error);
-                    }
-                }
+        // Add to recent tips
+        recentTips.add(tipKey);
+
+        // Remove from recent tips after 10 seconds
+        setTimeout(() => {
+            recentTips.delete(tipKey);
+        }, 10000);
+
+        console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
+        try {
+            const response = await fetch('https://www.bren.lol/api/processTGTip', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fromUsername: fromUser,
+                    fromUserid: fromUserid,
+                    first_name: message.from.first_name,
+                    last_name: message.from.last_name,
+                    toUsername: tipInfo.recipient,
+                    amount: tipInfo.amount,
+                    messageId,
+                    chatId,
+                    chatName
+                }),
+            });
+
+            // delay for 100ms
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            if (response.ok) {
+                console.log('Tip processed successfully.');
+            } else {
+                console.error('Error processing tip:', await response.text());
             }
+        } catch (error) {
+            console.error('Error calling processTip API:', error);
         }
     } else {
         res.status(405).json({ error: 'Method not allowed' });
