@@ -167,6 +167,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } else {
             console.error('Error processing tip:', await response.text());
         }
+        console.log({ response: response.json() })
 
     } else {
         res.status(405).json({ error: 'Method not allowed' });
