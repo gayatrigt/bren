@@ -140,36 +140,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }, 10000);
 
         console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
-        try {
-            const response = await fetch('https://www.bren.lol/api/processTGTip', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    fromUsername: fromUser,
-                    fromUserid: fromUserid,
-                    first_name: message.from.first_name,
-                    last_name: message.from.last_name,
-                    toUsername: tipInfo.recipient,
-                    amount: tipInfo.amount,
-                    messageId,
-                    chatId,
-                    chatName
-                }),
-            });
 
-            // delay for 100ms
-            await new Promise(resolve => setTimeout(resolve, 10000));
+        const response = await fetch('https://www.bren.lol/api/processTGTip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                fromUsername: fromUser,
+                fromUserid: fromUserid,
+                first_name: message.from.first_name,
+                last_name: message.from.last_name,
+                toUsername: tipInfo.recipient,
+                amount: tipInfo.amount,
+                messageId,
+                chatId,
+                chatName
+            }),
+        });
 
-            if (response.ok) {
-                console.log('Tip processed successfully.');
-            } else {
-                console.error('Error processing tip:', await response.text());
-            }
-        } catch (error) {
-            console.error('Error calling processTip API:', error);
+        // delay for 100ms
+        await new Promise(resolve => setTimeout(resolve, 10000));
+
+        if (response.ok) {
+            console.log('Tip processed successfully.');
+        } else {
+            console.error('Error processing tip:', await response.text());
         }
+
     } else {
         res.status(405).json({ error: 'Method not allowed' });
     }
