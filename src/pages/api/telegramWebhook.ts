@@ -160,7 +160,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
 
             // delay for 100ms
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 10000));
 
             if (response.ok) {
                 console.log('Tip processed successfully.');
