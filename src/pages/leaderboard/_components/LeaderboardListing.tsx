@@ -67,16 +67,20 @@ const LeaderboardListing: React.FC = () => {
   const { address } = useAccount();
 
   const filterAndSortRankings = useCallback((rankings: EnrichedRankingData[]) => {
-    return rankings
-      .filter((ranking) => {
-        const metric = ranking[selectedTab?.key as keyof Rankings];
-        return metric !== 0 && metric !== null;
-      })
-      .sort((a, b) => {
-        const metricA = a[selectedTab?.key as keyof Rankings] as number;
-        const metricB = b[selectedTab?.key as keyof Rankings] as number;
-        return metricB - metricA;
-      });
+    const filteredRankings = rankings.filter((ranking) => {
+      const metric = ranking[selectedTab?.key as keyof Rankings];
+      return metric !== 0 && metric !== null;
+    });
+    console.log("Filtered rankings:", filteredRankings);
+
+    const sortedRankings = filteredRankings.sort((a, b) => {
+      const metricA = a[selectedTab?.key as keyof Rankings] as number;
+      const metricB = b[selectedTab?.key as keyof Rankings] as number;
+      return metricB - metricA;
+    });
+    console.log("Sorted rankings:", sortedRankings);
+
+    return sortedRankings;
   }, [selectedTab]);
 
   const fetchUserRanking = async () => {
@@ -98,7 +102,7 @@ const LeaderboardListing: React.FC = () => {
   const fetchRankings = async () => {
     setLoading(true);
     try {
-      // Fetch rankings
+      console.log("Fetching rankings...");
       const response = await fetch(
         `/api/db-rankings?sort=${selectedTab?.key}&page=${currentPage}&limit=${pagination.itemsPerPage}`,
       );
@@ -106,6 +110,9 @@ const LeaderboardListing: React.FC = () => {
         throw new Error("Failed to fetch rankings");
       }
       const data: ApiResponse = await response.json();
+      console.log("Ranking data:", data);
+
+      console.log("Fetching user details...");
 
       // Fetch user details
       const fids = data.data.map((ranking) => ranking.fid).join(",");
@@ -114,6 +121,8 @@ const LeaderboardListing: React.FC = () => {
         throw new Error("Failed to fetch user details");
       }
       const userData: { users: User[] } = await userResponse.json();
+
+      console.log("User data:", userData);
 
       // Combine ranking data with user details
       const enrichedRankings: EnrichedRankingData[] = data.data.map((ranking) => ({

@@ -31,14 +31,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 orderBy,
                 skip,
                 take: limitNumber,
+                include: {
+                    user: {
+                        select: {
+                            fid: true
+                        }
+                    }
+                }
             }),
             db.userRankings.count(),
         ])
 
         const totalPages = Math.ceil(totalCount / limitNumber)
 
+        // Transform the data to include fid at the top level
+        const transformedUsers = users.map((user, index) => ({
+            ...user,
+            fid: user.user?.fid,
+            rank: skip + index + 1, // Calculate rank based on the current page and index
+            user: undefined // Remove the nested user object
+        }))
+
         res.status(200).json({
-            data: users,
+            data: transformedUsers,
             pagination: {
                 currentPage: pageNumber,
                 totalPages,

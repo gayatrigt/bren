@@ -6,7 +6,7 @@ import { cn } from "~/utils/helpers";
 import { FaChevronDown } from "react-icons/fa6";
 
 export interface RankingData {
-  fid: number;
+  fid: number | undefined;
   walletAddress: string;
   tipsReceived: number | null;
   tipsSent: number | null;
@@ -37,7 +37,7 @@ export interface Pagination {
 }
 
 export interface User {
-  fid?: number;
+  fid?: number | undefined;
   username?: string;
   display_name?: string;
   pfp_url?: string;

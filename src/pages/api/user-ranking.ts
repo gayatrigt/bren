@@ -14,6 +14,8 @@ interface User {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { address, sort } = req.query
 
+    console.log(req.query)
+
     if (!address || typeof address !== 'string') {
         return res.status(400).json({ error: 'Invalid address parameter' })
     }
@@ -24,23 +26,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ error: 'Invalid sort parameter' })
         }
 
-        const userRanking = await db.userRankings.findFirst({
+        let user = await db.user.findUnique({
             where: {
-                user: {
+                walletAddress: address
+            },
+            include: {
+                userRankings: true,
+                farcasterDetails: true
+            }
+        });
+
+        // If not found, try case-insensitive search
+        if (!user) {
+            user = await db.user.findFirst({
+                where: {
                     walletAddress: {
                         equals: address,
                         mode: 'insensitive'
                     }
+                },
+                include: {
+                    userRankings: true,
+                    farcasterDetails: true
                 }
-            },
-            include: {
-                user: true
-            }
-        }) as (RankingData & { user: User }) | null;
-
-        if (!userRanking) {
-            return res.status(404).json({ error: 'User ranking not found' })
+            });
         }
+
+        console.log("user", user)
+
+        if (!user || !user.userRankings) {
+            return res.status(404).json({ error: 'User or user ranking not found' })
+        }
+
+        const userRanking = user.userRankings;
 
         const usersAbove = await db.userRankings.count({
             where: {
@@ -52,22 +70,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const rank = usersAbove + 1
 
-        // Fetch user details
-        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/neynar-users?fids=${userRanking.fid}`);
-        if (!userResponse.ok) {
-            throw new Error("Failed to fetch user details");
-        }
-        const userData: { users: User[] } = await userResponse.json();
+        let userDetails: User;
 
-        const userDetails: User = {
-            fid: userData.users[0]?.fid,
-            username: userData.users[0]?.username,
-            display_name: userData.users[0]?.display_name,
-            pfp_url: userData.users[0]?.pfp_url
-        };
+        if (user.farcasterDetails && user.farcasterDetails.fid) {
+            userDetails = {
+                fid: user.farcasterDetails.fid,
+                username: user.farcasterDetails.username || undefined,
+                display_name: user.farcasterDetails.display_name || undefined,
+                pfp_url: user.farcasterDetails.pfp || undefined
+            };
+        } else {
+            // Fetch user details from Neynar
+            const userResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/neynar-users?fids=${user.fid}`);
+            if (!userResponse.ok) {
+                throw new Error("Failed to fetch user details from Neynar");
+            }
+            const userData: { users: User[] } = await userResponse.json();
+
+            userDetails = {
+                fid: userData.users[0]?.fid,
+                username: userData.users[0]?.username,
+                display_name: userData.users[0]?.display_name,
+                pfp_url: userData.users[0]?.pfp_url
+            };
+
+            // Upsert FarcasterDetails
+            await db.farcasterDetails.upsert({
+                where: { userId: user.id },
+                update: {
+                    fid: userDetails.fid,
+                    username: userDetails.username,
+                    display_name: userDetails.display_name,
+                    pfp: userDetails.pfp_url
+                },
+                create: {
+                    userId: user.id,
+                    fid: userDetails.fid,
+                    username: userDetails.username,
+                    display_name: userDetails.display_name,
+                    pfp: userDetails.pfp_url
+                }
+            });
+        }
 
         const enrichedRanking: EnrichedRankingData = {
             ...userRanking,
+            fid: user.fid || undefined,
+            walletAddress: user.walletAddress || '',
             rank,
             userDetails,
         }
