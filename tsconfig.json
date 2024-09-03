@@ -7,6 +7,10 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
     "isolatedModules": true,
     /* Strictness */
     "strict": true,
@@ -44,6 +48,7 @@
     "**/*.cjs",
     "**/*.js",
     ".next/types/**/*.ts",
+    "next-env.d.ts",
     "seed-db.mjs"
   ],
   "exclude": [

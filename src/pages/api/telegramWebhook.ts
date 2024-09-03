@@ -82,6 +82,15 @@ function parseTipMessage(text: string, replyToMessage: any): { amount: number, r
     return { amount, recipient };
 }
 
+// Helper function to check if the message is a command
+function isCommand(text: string): boolean {
+    return text.startsWith('/');
+}
+
+// Helper function to check if the message is a personal message to the bot
+function isPersonalMessage(chat: any): boolean {
+    return chat.type === 'private';
+}
 
 // Main webhook handler
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

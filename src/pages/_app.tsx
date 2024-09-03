@@ -5,22 +5,32 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { RainbowWalletProvider } from "~/utils/rainbowConfig";
 import Layout from "~/components/layout";
 import Head from 'next/head';
+import { SessionProvider } from "next-auth/react";
 
-const MyApp: AppType<{ excludeNavbar: boolean }> = ({ Component, pageProps }) => {
+const MyApp: AppType<{ session: any, excludeNavbar: boolean }> = ({
+  Component,
+  pageProps: { session, excludeNavbar, ...pageProps }
+}) => {
   return (
-    <RainbowWalletProvider>
-      <Head>
-        <meta property="og:title" content="Bren" />
-        <meta property="og:site_name" content="Bren" />
-        <meta property="og:url" content="https://www.bren.lol" />
-        <meta property="og:description" content="Recognize your Based frens with $bren" />
-        <meta property="og:type" content="" />
-        <meta property="og:image" content="" />
-      </Head>
-      {pageProps.excludeNavbar ? <Component {...pageProps} /> : <Layout>
-        <Component {...pageProps} />
-      </Layout>}
-    </RainbowWalletProvider>
+    <SessionProvider session={session}>
+      <RainbowWalletProvider>
+        <Head>
+          <meta property="og:title" content="Bren" />
+          <meta property="og:site_name" content="Bren" />
+          <meta property="og:url" content="https://www.bren.lol" />
+          <meta property="og:description" content="Recognize your Based frens with $bren" />
+          <meta property="og:type" content="" />
+          <meta property="og:image" content="" />
+        </Head>
+        {excludeNavbar ? (
+          <Component {...pageProps} />
+        ) : (
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        )}
+      </RainbowWalletProvider>
+    </SessionProvider>
   );
 };
 

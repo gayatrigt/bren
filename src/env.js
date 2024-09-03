@@ -22,7 +22,9 @@ export const env = createEnv({
     BASE_URL: z.string(),
     STACK_POINT_SYSTEM_ID: z.string(),
     DUNE_API_KEY: z.string(),
-    AIRSTACK_API_KEY: z.string()
+    AIRSTACK_API_KEY: z.string(),
+    NEXTAUTH_URL: z.string(),
+    NEXTAUTH_SECRET: z.string()
     // DISCORD_CLIENT_ID: z.string(),
     // DISCORD_CLIENT_SECRET: z.string(),
   },
@@ -48,7 +50,9 @@ export const env = createEnv({
     STACK_API_KEY: process.env.STACK_API_KEY,
     STACK_POINT_SYSTEM_ID: process.env.STACK_POINT_SYSTEM_ID,
     DUNE_API_KEY: process.env.DUNE_API_KEY,
-    AIRSTACK_API_KEY: process.env.AIRSTACK_API_KEY
+    AIRSTACK_API_KEY: process.env.AIRSTACK_API_KEY,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

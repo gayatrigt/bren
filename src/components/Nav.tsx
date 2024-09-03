@@ -86,7 +86,6 @@ const Nav = () => {
                 </Link>
               ))}
             </div>
-
             {!data.address && (
               <button onClick={openConnectModal} className={buttonClasses}>
                 Connect Wallet

@@ -14,8 +14,6 @@ interface User {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { address, sort } = req.query
 
-    console.log(req.query)
-
     if (!address || typeof address !== 'string') {
         return res.status(400).json({ error: 'Invalid address parameter' })
     }
@@ -51,8 +49,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
             });
         }
-
-        console.log("user", user)
 
         if (!user || !user.userRankings) {
             return res.status(404).json({ error: 'User or user ranking not found' })
