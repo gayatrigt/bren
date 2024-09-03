@@ -10,6 +10,7 @@ import { setUserAllowance } from "./functions/setAllowance";
 import { getStartOfWeek } from "./getUserStats";
 import { fids } from "./whitelist/fids";
 import { CheckEligibilityAPIResponse } from "./whitelist/fbi-token";
+import { use } from "react";
 
 export async function processWebhookData(hash: string) {
     console.log('processWebhookData started');
@@ -105,7 +106,14 @@ export async function processWebhookData(hash: string) {
             // Perform actions for existing user
 
             const currentAllowance = await getUserCurrentAllowanceByWalletAddress(fromAddress);
+            if (currentAllowance === undefined) {
+                console.error(`Unable to retrieve current allowance for wallet address: ${fromAddress}`);
+                // Handle the error case, perhaps by sending a message to the user or logging it
+                return; // or throw an error, or handle it in some other way
+            }
+
             const allowanceLeft = currentAllowance - tipAmount;
+
             console.log(`Current Allowance: ${currentAllowance}, Allowance Left: ${allowanceLeft}`);
 
             await processTip(
@@ -184,6 +192,12 @@ export async function processWebhookData(hash: string) {
                 }
 
                 const currentAllowance = await getUserCurrentAllowanceByWalletAddress(fromAddress);
+
+                if (currentAllowance === undefined) {
+                    console.error(`Unable to retrieve current allowance for wallet address: ${fromAddress}`);
+                    // Handle the error case, perhaps by sending a message to the user or logging it
+                    return; // or throw an error, or handle it in some other way
+                }
 
                 await processTip(
                     tipAmount,
@@ -298,21 +312,20 @@ const checkUserExists = async (fid: number, walletAddress: string) => {
     }
 };
 
-async function getUserCurrentAllowanceByFid(fid: number): Promise<number> {
-    const user = await db.user.findUnique({ where: { fid } });
-    if (!user) throw new Error('User not found');
-    return getUserCurrentAllowance(user.id);
-}
-
-async function getUserCurrentAllowanceByWalletAddress(walletAddress: string): Promise<number> {
+async function getUserCurrentAllowanceByWalletAddress(walletAddress: string): Promise<number | undefined> {
     const user = await db.user.findUnique({ where: { walletAddress } });
     if (!user) throw new Error('User not found');
-    return getUserCurrentAllowance(user.id);
+    return getUserCurrentAllowance(user.walletAddress, user.id);
 }
 
-async function getUserCurrentAllowance(userId: string): Promise<number> {
+async function getUserCurrentAllowance(wallet: string | null, userId: string): Promise<number | undefined> {
+    if (!wallet) {
+        console.log("Wallet not connected")
+        return undefined
+    }
+
     // Get the user's base allowance
-    const allowance = await getUserAllowance(userId);
+    const allowance = await getUserAllowance(wallet);
 
     // Get the start of the current week
     const startOfWeek = getStartOfWeek();
