@@ -9,29 +9,79 @@ datasource db {
 }
 
 model User {
-  walletAddress    String        @id
-  fid              Int           @unique
-  display_name     String?
-  username         String?
-  pfp              String?
-  isAllowanceGiven Boolean?
-  allowanceGivenAt DateTime?     @default(now())
-  type             UserType?
-  sentTransactions Transaction[] @relation("FromUser")
+  id                   String            @id @default(cuid())
+  name                 String?
+  email                String?           @unique
+  emailVerified        DateTime?
+  image                String?
+  walletAddress        String?           @unique
+  fid                  Int?              @unique
+  tgUsername           String?           @unique
+  isAllowanceGiven     Boolean?
+  allowanceGivenAt     DateTime?         @default(now())
+  farcasterDetails     FarcasterDetails?
+  telegramDetails      TelegramDetails?
+  sentTransactions     Transaction[]     @relation("FromUser")
+  receivedTransactions Transaction[]     @relation("ToUser")
+  userRankings         UserRankings?
+  weeklyPoints         WeeklyPoints[]
+  accounts             Account[]
+  sessions             Session[]
 }
 
-model UserTG {
-  username         String          @id @unique
-  fid              Int?            @unique
-  display_name     String?
-  idTG             Float?
-  first_name       String?
-  last_name        String?
-  wallet           String?
-  pfp              String?
-  isAllowanceGiven Boolean?
-  allowanceGivenAt DateTime?       @default(now())
-  sentTransactions TransactionTG[]
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model FarcasterDetails {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  fid          Int?      @unique
+  display_name String?
+  username     String?
+  pfp          String?
+  type         UserType?
+  user         User      @relation(fields: [userId], references: [id])
+}
+
+model TelegramDetails {
+  id         String  @id @default(uuid())
+  userId     String  @unique
+  idTG       Float?
+  first_name String?
+  last_name  String?
+  pfp        String?
+  user       User    @relation(fields: [userId], references: [id])
 }
 
 model ProcessedMessage {
@@ -43,53 +93,45 @@ model ProcessedMessage {
   @@unique([chatId, messageId])
 }
 
-model TransactionTG {
-  messageid    String   @id @unique
-  fromUsername String
-  groupid      Float?
-  groupname    String?
-  toUsername   String
-  text         String
-  amount       Float
-  createdAt    DateTime @default(now())
-  value        String
-  fromUser     UserTG   @relation(fields: [fromUsername], references: [username])
+model Transaction {
+  id             String   @id @default(uuid())
+  fromUserId     String
+  toUserId       String
+  amount         Float
+  value          String
+  platform       Platform
+  createdAt      DateTime @default(now())
+  castHash       String?  @unique
+  parentCastHash String?  @unique
+  messageid      String?  @unique
+  text           String?
+  link           String?
+  groupid        Float?
+  groupname      String?
+  fromUser       User     @relation("FromUser", fields: [fromUserId], references: [id])
+  toUser         User     @relation("ToUser", fields: [toUserId], references: [id])
 }
 
 model UserRankings {
-  fid               Int    @id
-  walletAddress     String @unique
-  tipsReceived      Float? @default(0)
-  tipsSent          Float? @default(0)
-  tipsReceivedCount Int?   @default(0)
-  tipsSentCount     Int?   @default(0)
+  id                String @id @default(uuid())
+  userId            String @unique
+  tipsReceived      Float  @default(0)
+  tipsSent          Float  @default(0)
+  tipsReceivedCount Int    @default(0)
+  tipsSentCount     Int    @default(0)
+  user              User   @relation(fields: [userId], references: [id])
 }
 
-model UserRankingsTG {
-  username          String   @id
-  walletAddress     String?  @unique
-  tipsReceived      Float?   @default(0)
-  tipsSent          Float?   @default(0)
-  tipsReceivedCount Int?     @default(0)
-  tipsSentCount     Int?     @default(0)
-  lastUpdated       DateTime
-}
+model WeeklyPoints {
+  id           String   @id @default(uuid())
+  userId       String
+  weekStart    DateTime
+  pointsEarned Float    @default(0)
+  pointsGiven  Float    @default(0)
+  platform     Platform
+  user         User     @relation(fields: [userId], references: [id])
 
-model Transaction {
-  castHash       String   @id
-  fromAddress    String
-  fromUsername   String
-  toAddress      String?
-  toUsername     String
-  toFid          Int
-  text           String
-  link           String
-  parentCastHash String?
-  amount         Float
-  createdAt      DateTime @default(now())
-  fromFid        Int
-  value          String
-  fromUser       User     @relation("FromUser", fields: [fromAddress], references: [walletAddress])
+  @@unique([userId, weekStart, platform])
 }
 
 model Invite {
@@ -116,4 +158,9 @@ enum UserType {
   INVITED
   FOLLOWER
   WHITELISTED
+}
+
+enum Platform {
+  FARCASTER
+  TELEGRAM
 }

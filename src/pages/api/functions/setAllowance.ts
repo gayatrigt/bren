@@ -2,9 +2,18 @@ import { UserType } from "@prisma/client";
 import { db } from "~/server/db";
 import { stack } from "~/server/stack";
 
-export async function setUserAllowance(fid: number, walletAddress: string, userType: UserType): Promise<void> {
+export async function setUserAllowance(fid: number | null, walletAddress: string | null, userType: UserType): Promise<void> {
     try {
         console.log("🚀 ~ setUserAllowance ~ userType:", userType)
+
+        if (!fid) {
+            console.log("fid is null")
+            return
+        }
+
+        if (!walletAddress) {
+            throw new Error('Wallet address is required to set user allowance');
+        }
 
         // Determine allowance points based on user type
         let allowancePoints: number;
@@ -35,21 +44,29 @@ export async function setUserAllowance(fid: number, walletAddress: string, userT
 
                 const firstInvite = invites[0];
 
-                // Fetch the invitor's information
+                // Fetch the invitor's information including FarcasterDetails
                 const invitor = await db.user.findUnique({
-                    where: { fid: firstInvite?.invitorFid }
+                    where: { fid: firstInvite?.invitorFid },
+                    include: { farcasterDetails: true }
                 });
 
                 if (!invitor) {
                     throw new Error('Invitor not found');
                 }
 
-                if (invitor.type === UserType.ALLIES) {
-                    allowancePoints = 200;
-                } else if (invitor.type === UserType.SPLITTERS) {
-                    allowancePoints = 100;
-                } else {
-                    throw new Error('Invalid invitor type');
+                if (!invitor.farcasterDetails || !invitor.farcasterDetails.type) {
+                    throw new Error('Invitor Farcaster details or type not set');
+                }
+
+                switch (invitor.farcasterDetails.type) {
+                    case UserType.ALLIES:
+                        allowancePoints = 200;
+                        break;
+                    case UserType.SPLITTERS:
+                        allowancePoints = 100;
+                        break;
+                    default:
+                        throw new Error('Invalid invitor type');
                 }
                 break;
             case UserType.FOLLOWER:

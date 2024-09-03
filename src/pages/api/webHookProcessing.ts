@@ -104,7 +104,7 @@ export async function processWebhookData(hash: string) {
             console.log('User already exists in the database');
             // Perform actions for existing user
 
-            const currentAllowance = await getUserCurrentAllowance(fromAddress);
+            const currentAllowance = await getUserCurrentAllowanceByWalletAddress(fromAddress);
             const allowanceLeft = currentAllowance - tipAmount;
             console.log(`Current Allowance: ${currentAllowance}, Allowance Left: ${allowanceLeft}`);
 
@@ -154,12 +154,20 @@ export async function processWebhookData(hash: string) {
                         data: {
                             walletAddress: fromAddress,
                             fid: fromFid,
-                            display_name: neynarCast.author.display_name,
-                            username: fromUsername,
-                            pfp: neynarCast.author.pfp_url,
                             isAllowanceGiven: false,
-                            type: result
+                            farcasterDetails: {
+                                create: {
+                                    fid: fromFid,
+                                    display_name: neynarCast.author.display_name,
+                                    username: fromUsername,
+                                    pfp: neynarCast.author.pfp_url,
+                                    type: result
+                                }
+                            }
                         },
+                        include: {
+                            farcasterDetails: true
+                        }
                     });
 
                     console.log(`New user created successfully. FID: ${fromFid}`);
@@ -175,7 +183,7 @@ export async function processWebhookData(hash: string) {
                     console.error('Failed to set allowance:', error);
                 }
 
-                const currentAllowance = await getUserCurrentAllowance(fromAddress);
+                const currentAllowance = await getUserCurrentAllowanceByWalletAddress(fromAddress);
 
                 await processTip(
                     tipAmount,
@@ -270,12 +278,18 @@ export async function processWebhookData(hash: string) {
 // checking if user exists in db
 const checkUserExists = async (fid: number, walletAddress: string) => {
     try {
-        const user = await db.user!.findUnique({
+        const user = await db.user.findUnique({
             where: {
-                fid: fid,
-                walletAddress
+                fid: fid
+            },
+            include: {
+                farcasterDetails: true
             }
         });
+
+        if (user && user.walletAddress !== walletAddress) {
+            throw new Error("Wallet address mismatch");
+        }
 
         return !!user;
     } catch (error) {
@@ -284,28 +298,39 @@ const checkUserExists = async (fid: number, walletAddress: string) => {
     }
 };
 
+async function getUserCurrentAllowanceByFid(fid: number): Promise<number> {
+    const user = await db.user.findUnique({ where: { fid } });
+    if (!user) throw new Error('User not found');
+    return getUserCurrentAllowance(user.id);
+}
 
-async function getUserCurrentAllowance(primaryAddress: string): Promise<number> {
+async function getUserCurrentAllowanceByWalletAddress(walletAddress: string): Promise<number> {
+    const user = await db.user.findUnique({ where: { walletAddress } });
+    if (!user) throw new Error('User not found');
+    return getUserCurrentAllowance(user.id);
+}
+
+async function getUserCurrentAllowance(userId: string): Promise<number> {
     // Get the user's base allowance
-    const allowance = await getUserAllowance(primaryAddress);
+    const allowance = await getUserAllowance(userId);
 
     // Get the start of the current week
     const startOfWeek = getStartOfWeek();
 
-    // Get the sum of 'value' for transactions from the start of this week for the primary address
+    // Get the sum of 'amount' for transactions from the start of this week for the user
     const result = await db.transaction.aggregate({
         where: {
             createdAt: {
                 gte: startOfWeek
             },
-            fromAddress: primaryAddress
+            fromUserId: userId
         },
         _sum: {
             amount: true
         }
     });
 
-    // Get the total amount given (sum of 'value')
+    // Get the total amount given (sum of 'amount')
     const totalAmountGiven = result._sum.amount || 0;
 
     // Calculate allowance left

@@ -16,8 +16,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const user = await prisma.user.findUnique({
-            where: { fid: parseInt(fid) }
+        const user = await prisma.user.findFirst({
+            where: {
+                farcasterDetails: { fid: parseInt(fid) }
+            },
+            include: {
+                farcasterDetails: true
+            }
         });
 
         if (!user) {
@@ -27,9 +32,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const startOfWeek = getStartOfWeek();
         const totalAllowance = await getUserAllowance(user.walletAddress);
 
+        if (!totalAllowance) {
+            return res.status(500).json({ error: 'Failed to retrieve user allowance' });
+        }
+
         const weeklyTransactions = await prisma.transaction.aggregate({
             where: {
-                fromAddress: user.walletAddress,
+                fromUserId: user.id,
                 createdAt: { gte: startOfWeek },
             },
             _sum: { amount: true },
@@ -40,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         res.status(200).json({
             fid: user.fid,
-            username: user.username,
+            username: user.farcasterDetails?.username,
             totalAllowance: totalAllowance,
             weeklySpent: weeklySpent,
             weeklyAllowanceLeft: weeklyAllowanceLeft

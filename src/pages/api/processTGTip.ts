@@ -32,40 +32,84 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         console.log("Processing tip:", { fromUsername, toUsername, amount, chatId, messageId });
 
-        const fromUser = await db.userTG.findUnique({ where: { username: fromUsername } });
-        const toUser = await db.userTG.findUnique({ where: { username: toUsername } });
+        // Find or create fromUser
+        let fromUser = await db.user.findFirst({
+            where: { tgUsername: fromUsername },
+            include: { telegramDetails: true }
+        });
 
         if (!fromUser) {
             console.log("Creating new fromUser:", fromUsername);
-            await db.userTG.create({
+            fromUser = await db.user.create({
                 data: {
-                    username: fromUsername,
-                    idTG: fromUserid,
-                    first_name,
-                    last_name: last_name || '',
-                    isAllowanceGiven: true,
-                    allowanceGivenAt: new Date(),
+                    tgUsername: fromUsername,
+                    isAllowanceGiven: false,
+                    telegramDetails: {
+                        create: {
+                            idTG: fromUserid,
+                            first_name,
+                            last_name: last_name || '',
+                        }
+                    }
                 },
+                include: { telegramDetails: true }
             });
         }
+
+        // Find or create toUser
+        let toUser = await db.user.findFirst({
+            where: { tgUsername: toUsername },
+            include: { telegramDetails: true }
+        });
 
         if (!toUser) {
             console.log("Creating new toUser:", toUsername);
-            await db.userTG.create({
+            toUser = await db.user.create({
                 data: {
-                    username: toUsername,
+                    tgUsername: toUsername,
                     isAllowanceGiven: false,
+                    telegramDetails: {
+                        create: {}
+                    }
                 },
+                include: { telegramDetails: true }
             });
         }
 
+        // Find the fromUser based on tgUsername
+        const fromUserdb = await db.user.findUnique({
+            where: { tgUsername: fromUsername },
+            select: { id: true }
+        });
+
+        if (!fromUser) {
+            console.log("User not found:", fromUsername);
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const fromUserId = fromUserdb?.id;
+
+        const toUserdb = await db.user.findUnique({
+            where: { tgUsername: toUsername },
+            select: { id: true }
+        });
+
+        if (!toUser) {
+            console.log("User not found:", toUsername);
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const toUserId = toUserdb?.id;
+
         const startOfWeek = getStartOfWeek();
-        const tipsSentThisWeek = await db.transactionTG.aggregate({
+        const tipsSentThisWeek = await db.transaction.aggregate({
             where: {
-                fromUsername,
+                fromUserId: fromUserId,
                 createdAt: { gte: startOfWeek },
             },
-            _sum: { amount: true },
+            _sum: {
+                amount: true
+            },
         });
 
         const remainingAllowance = 1500 - (tipsSentThisWeek._sum.amount || 0);
@@ -73,47 +117,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (amount <= remainingAllowance) {
             console.log("Processing transaction...");
-            await db.transactionTG.create({
+            await db.transaction.create({
                 data: {
-                    messageid: messageId,
-                    fromUsername,
-                    groupid: chatId,
-                    groupname: chatName,
-                    toUsername,
-                    text: `${amount} $bren to @${toUsername}`,
-                    amount,
+                    fromUserId: fromUser.id,
+                    toUserId: toUser.id,
+                    amount: Number(amount),
                     value: amount.toString(),
+                    platform: 'TELEGRAM',
+                    messageid: messageId,
+                    groupid: Number(chatId),
+                    groupname: chatName,
+                    text: `${amount} $bren to @${toUsername}`,
                 },
             });
 
             console.log("Updating user rankings...");
-            await db.userRankingsTG.upsert({
-                where: { username: fromUsername },
+            await db.userRankings.upsert({
+                where: { userId: fromUserId },
                 update: {
-                    tipsSent: { increment: amount },
+                    tipsSent: { increment: Number(amount) },
                     tipsSentCount: { increment: 1 },
-                    lastUpdated: new Date(),
                 },
                 create: {
-                    username: fromUsername,
-                    tipsSent: amount,
+                    userId: fromUser.id,
+                    tipsSent: Number(amount),
                     tipsSentCount: 1,
-                    lastUpdated: new Date(),
                 },
             });
 
-            await db.userRankingsTG.upsert({
-                where: { username: toUsername },
+            await db.userRankings.upsert({
+                where: { userId: toUser.id },
                 update: {
-                    tipsReceived: { increment: amount },
+                    tipsReceived: { increment: Number(amount) },
                     tipsReceivedCount: { increment: 1 },
-                    lastUpdated: new Date(),
                 },
                 create: {
-                    username: toUsername,
-                    tipsReceived: amount,
+                    userId: toUser.id,
+                    tipsReceived: Number(amount),
                     tipsReceivedCount: 1,
-                    lastUpdated: new Date(),
                 },
             });
 

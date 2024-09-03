@@ -2,6 +2,7 @@ import { db } from "~/server/db";
 import { getUserById } from "~/server/neynar";
 import { botReply, botReplyFail, botReplySuccess } from "./botReply";
 import { NeynarUser } from "~/contracts/NeynarUser";
+import { Platform } from "@prisma/client";
 
 const validHashtags = ["integrity", "teamwork", "tenacity", "creativity", "optimism"];
 
@@ -84,27 +85,46 @@ export async function processTip(
                 return; // Exit the function early
             }
 
+            // Find or create the users
+            const [fromUser, toUser] = await Promise.all([
+                db.user.upsert({
+                    where: { fid: fromFid },
+                    update: { walletAddress: fromAddress, farcasterDetails: { update: { username: fromUsername } } },
+                    create: {
+                        fid: fromFid,
+                        walletAddress: fromAddress,
+                        farcasterDetails: { create: { fid: fromFid, username: fromUsername } }
+                    }
+                }),
+                db.user.upsert({
+                    where: { fid: toFid },
+                    update: { walletAddress: toAddress, farcasterDetails: { update: { username: toUsername } } },
+                    create: {
+                        fid: toFid,
+                        walletAddress: toAddress,
+                        farcasterDetails: { create: { fid: toFid, username: toUsername } }
+                    }
+                })
+            ]);
+
             const data = {
                 amount: tipAmount,
-                fromFid,
-                fromAddress,
-                fromUsername,
-                toUsername,
-                toFid,
-                toAddress: toAddress,
+                fromUserId: fromUser.id,
+                toUserId: toUser.id,
                 text: message,
                 value: hashtagValue,
                 castHash,
                 parentCastHash: neynarCast.parent_author ? neynarCast.parent_hash : null,
                 link: `https://warpcast.com/${fromUsername}/${castHash}`,
+                platform: Platform.FARCASTER
             };
 
             console.log('Attempting to create transaction in database:', data);
 
             const createdTransaction = await db.transaction.create({ data });
 
-            await upsertUserRankings(fromFid, fromAddress, tipAmount, false);
-            await upsertUserRankings(toFid, toAddress, tipAmount, true);
+            await updateUserRankings(fromUser.id, tipAmount, false);
+            await updateUserRankings(toUser.id, tipAmount, true);
 
             // ... (keep the existing bot reply logic)
             const allowanceLeft = currentAllowance - tipAmount;
@@ -187,17 +207,32 @@ async function isFollowing(fromFid: number): Promise<boolean> {
     }
 }
 
-async function upsertUserRankings(fid: number, walletAddress: string, amount: number, isReceived: boolean) {
+// async function upsertUserRankings(fid: number, walletAddress: string, amount: number, isReceived: boolean) {
+//     await db.userRankings.upsert({
+//         where: { fid: fid },
+//         update: {
+//             walletAddress: walletAddress,
+//             [isReceived ? 'tipsReceived' : 'tipsSent']: { increment: amount },
+//             [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: { increment: 1 }
+//         },
+//         create: {
+//             fid: fid,
+//             walletAddress: walletAddress,
+//             [isReceived ? 'tipsReceived' : 'tipsSent']: amount,
+//             [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: 1
+//         }
+//     });
+// }
+
+async function updateUserRankings(userId: string, amount: number, isReceived: boolean) {
     await db.userRankings.upsert({
-        where: { fid: fid },
+        where: { userId: userId },
         update: {
-            walletAddress: walletAddress,
             [isReceived ? 'tipsReceived' : 'tipsSent']: { increment: amount },
             [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: { increment: 1 }
         },
         create: {
-            fid: fid,
-            walletAddress: walletAddress,
+            userId: userId,
             [isReceived ? 'tipsReceived' : 'tipsSent']: amount,
             [isReceived ? 'tipsReceivedCount' : 'tipsSentCount']: 1
         }

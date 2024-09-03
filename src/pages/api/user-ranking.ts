@@ -26,12 +26,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const userRanking = await db.userRankings.findFirst({
             where: {
-                walletAddress: {
-                    equals: address,
-                    mode: 'insensitive'
+                user: {
+                    walletAddress: {
+                        equals: address,
+                        mode: 'insensitive'
+                    }
                 }
             },
-        }) as RankingData | null
+            include: {
+                user: true
+            }
+        }) as (RankingData & { user: User }) | null;
 
         if (!userRanking) {
             return res.status(404).json({ error: 'User ranking not found' })

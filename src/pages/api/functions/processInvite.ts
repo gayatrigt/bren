@@ -103,23 +103,41 @@ export async function processInvite(invitorFid: number, cast: Cast) {
             // Use upsert instead of create to handle both new and existing users
             const newUser = await db.user.upsert({
                 where: {
-                    walletAddress: mentionedProfile.verified_addresses.eth_addresses[0] || ''
+                    fid: mentionedProfile.fid
                 },
                 update: {
-                    fid: mentionedProfile.fid,
-                    display_name: mentionedProfile.display_name,
-                    username: mentionedProfile.username,
-                    pfp: mentionedProfile.pfp_url,
-                    type: 'INVITED'
+                    walletAddress: mentionedProfile.verified_addresses.eth_addresses[0],
+                    farcasterDetails: {
+                        upsert: {
+                            create: {
+                                fid: mentionedProfile.fid,
+                                display_name: mentionedProfile.display_name,
+                                username: mentionedProfile.username,
+                                pfp: mentionedProfile.pfp_url,
+                                type: UserType.INVITED
+                            },
+                            update: {
+                                display_name: mentionedProfile.display_name,
+                                username: mentionedProfile.username,
+                                pfp: mentionedProfile.pfp_url,
+                                type: UserType.INVITED
+                            }
+                        }
+                    }
                 },
                 create: {
                     fid: mentionedProfile.fid,
-                    walletAddress: mentionedProfile.verified_addresses.eth_addresses[0] || '',
-                    display_name: mentionedProfile.display_name,
-                    username: mentionedProfile.username,
-                    pfp: mentionedProfile.pfp_url,
+                    walletAddress: mentionedProfile.verified_addresses.eth_addresses[0],
                     isAllowanceGiven: false,
-                    type: 'INVITED'
+                    farcasterDetails: {
+                        create: {
+                            fid: mentionedProfile.fid,
+                            display_name: mentionedProfile.display_name,
+                            username: mentionedProfile.username,
+                            pfp: mentionedProfile.pfp_url,
+                            type: UserType.INVITED
+                        }
+                    }
                 }
             });
 
@@ -129,7 +147,7 @@ export async function processInvite(invitorFid: number, cast: Cast) {
                 await setUserAllowance(newUser.fid, newUser.walletAddress, UserType.INVITED);
                 allowanceSet = true;
             } catch (error) {
-                console.error(`Error setting allowance for user ${newUser.username}:`, error);
+                console.error(`Error setting allowance for user ${newUser.fid}:`, error);
             }
 
             // Only send bot reply if allowance was successfully set

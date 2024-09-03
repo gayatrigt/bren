@@ -5,6 +5,7 @@ import { stack } from '~/server/stack'
 import { checkWhitelist } from './functions/checkWhiteList';
 import { UserType } from '@prisma/client';
 import { checkEligibility } from './checkEligibility';
+import { error } from 'console';
 
 export function getStartOfWeek(): Date {
     const now = new Date();
@@ -14,10 +15,18 @@ export function getStartOfWeek(): Date {
 }
 
 async function getUserRank(fid: number) {
+    // First, get the userId from fid
+    const user = await db.user.findFirst({
+        where: { farcasterDetails: { fid: fid } },
+        select: { id: true }
+    });
+
+    if (!user) {
+        return null;
+    }
+
     const userDetails = await db.userRankings.findUnique({
-        where: {
-            fid: fid,
-        },
+        where: { userId: user.id },
     })
     const userRank = await db.userRankings.count({
         where: {
@@ -31,7 +40,11 @@ async function getUserRank(fid: number) {
     }
 }
 
-export async function getUserAllowance(wallet: string): Promise<number> {
+export async function getUserAllowance(wallet: string | null): Promise<number | null> {
+    if (!wallet) {
+        console.log("Wallet is null", wallet)
+        return null
+    }
     const allowance: number = await stack.getPoints(wallet);
     return allowance
 }
@@ -57,18 +70,15 @@ export default async function handler(
         // Get user data
         const user = await db.user.findUnique({
             where: { fid: numericFid },
-            select: {
-                type: true,
-                username: true,
-                pfp: true,
-                walletAddress: true,
-            },
+            include: {
+                farcasterDetails: true
+            }
         })
 
         // Get rank
         const details = await getUserRank(numericFid);
-        const rank = details.rank;
-        const pointsEarned = details.tipsReceived;
+        const rank = details?.rank;
+        const pointsEarned = details?.tipsReceived;
 
         let response: any = {
             rank,
@@ -122,9 +132,14 @@ export default async function handler(
 
         // User exists
         const totalAllowance = await getUserAllowance(user.walletAddress)
+
+        if (!totalAllowance) {
+            console.log("No allowance given", user.fid)
+            return res.status(200).json({ error: 'User has no total allowance' })
+        }
         const weeklyTransactions = await db.transaction.aggregate({
             where: {
-                fromAddress: user.walletAddress,
+                fromUserId: user.id,
                 createdAt: { gte: startOfWeek },
             },
             _sum: { amount: true },
@@ -146,7 +161,7 @@ export default async function handler(
 
         // Invites left
         let invitesLeft = 0;
-        if (user.type === UserType.ALLIES || user.type === UserType.SPLITTERS) {
+        if (user.farcasterDetails?.type === UserType.ALLIES || user.farcasterDetails?.type === UserType.SPLITTERS) {
             const invitesUsed = await db.invite.count({
                 where: {
                     invitorFid: numericFid,
@@ -158,7 +173,7 @@ export default async function handler(
 
         response = {
             ...response,
-            userType: user.type,
+            userType: user.farcasterDetails?.type,
             weeklyAllowanceLeft,
             totalAllowance,
             recentInviteesPfps: invitedUsers.map(invite => invite.inviteePfp),

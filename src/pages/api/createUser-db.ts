@@ -43,13 +43,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const newUser = await db.user.create({
                 data: {
                     walletAddress: user.verified_addresses.eth_addresses[0],
-                    fid: user.fid,
-                    display_name: user.display_name,
-                    username: user.username,
-                    pfp: user.pfp_url,
                     isAllowanceGiven: false,
-                    type: 'WHITELISTED'
+                    farcasterDetails: {
+                        create: {
+                            fid: user.fid,
+                            display_name: user.display_name,
+                            username: user.username,
+                            pfp: user.pfp_url,
+                            type: 'WHITELISTED'
+                        }
+                    }
                 },
+                include: {
+                    farcasterDetails: true
+                }
             });
             console.log(`New user created successfully. FID: ${newUser.fid}`);
 

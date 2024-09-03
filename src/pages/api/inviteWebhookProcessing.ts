@@ -170,13 +170,20 @@ export async function processinviteWebhookData(hash: string) {
                         const newUser = await db.user.create({
                             data: {
                                 walletAddress: fromAddress,
-                                fid: fromFid,
-                                display_name: neynarCast.author.display_name,
-                                username: fromUsername,
-                                pfp: neynarCast.author.pfp_url,
                                 isAllowanceGiven: false,
-                                type: 'WHITELISTED'
+                                farcasterDetails: {
+                                    create: {
+                                        fid: fromFid,
+                                        display_name: neynarCast.author.display_name,
+                                        username: fromUsername,
+                                        pfp: neynarCast.author.pfp_url,
+                                        type: 'WHITELISTED'
+                                    }
+                                }
                             },
+                            include: {
+                                farcasterDetails: true
+                            }
                         });
 
                         console.log(`New user created successfully. FID: ${fromFid}`);

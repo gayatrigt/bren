@@ -58,14 +58,22 @@ export default async function handler(
 
         const { fid, username, displayName: neynarDisplayName, pfpUrl } = neynarUserInfo;
 
-        // Check User table
-        const user = await db.user.findUnique({
-            where: { fid },
+        // Check User table and include FarcasterDetails
+        const user = await db.user.findFirst({
+            where: {
+                OR: [
+                    { walletAddress: address },
+                    { farcasterDetails: { fid: fid } }
+                ]
+            },
+            include: {
+                farcasterDetails: true
+            }
         });
 
         // Get user rankings
         const userRanking = await db.userRankings.findUnique({
-            where: { fid },
+            where: { userId: user?.id }
         });
 
         if (user || userRanking) {
@@ -83,18 +91,18 @@ export default async function handler(
                     tipsReceived: true
                 },
                 where: {
-                    fid
+                    userId: user?.id
                 }
             });
 
             res.status(200).json({
                 weeklyAllowance: user ? true : false,
                 invites: invitesCount,
-                brenPoints: totalBrenPoints._sum.tipsReceived || 0,
-                name: user?.display_name || neynarDisplayName,
-                username: user?.username || username,
-                pfpUrl: user?.pfp || pfpUrl,
-                fid,
+                brenPoints: totalBrenPoints._sum?.tipsReceived || 0,
+                name: user?.farcasterDetails?.display_name || neynarDisplayName,
+                username: user?.farcasterDetails?.username || username,
+                pfpUrl: user?.farcasterDetails?.pfp || pfpUrl,
+                fid: user?.farcasterDetails?.fid || fid,
             });
         } else {
             res.status(404).json({ error: 'User not found in any table' });
