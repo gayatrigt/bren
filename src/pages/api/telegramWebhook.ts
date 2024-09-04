@@ -115,7 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const messageId = message.message_id.toString();
         const chatId = message.chat.id;
         const chatName = message.chat.title || 'Private Chat';
-        const text = message.text || '';
+        const text = message.text;
 
         console.log("parsed 2", message, fromUser)
 

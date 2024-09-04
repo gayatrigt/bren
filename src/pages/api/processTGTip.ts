@@ -185,7 +185,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             console.log(`Tip processed: ${amount} $bren from @${fromUsername} to @${toUsername}`);
 
-            const text = `Thank you for using Bren! Please connect your wallet so your points can be on-chain!`;
+            const text = `Thank you for using Bren! You with sent ${amount} $bren to @${toUsername}`;
             await sendTelegramDM(fromUserid, text);
 
             res.status(200).json({ message: 'Tip processed successfully' });
