@@ -3,11 +3,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
-// In-memory cache for recent tips (this will reset on server restart)
-// const recentTips = new Set<string>();
 
-export async function sendTelegramDM(userId: number, text: string) {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+export async function sendTelegramDM(userId: number, text: string, parse_mode: 'HTML' | 'Markdown' | 'MarkdownV2' = 'HTML') {
+    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -15,8 +13,13 @@ export async function sendTelegramDM(userId: number, text: string) {
         body: JSON.stringify({
             chat_id: userId,
             text: text,
+            parse_mode: parse_mode,
         }),
     });
+
+    if (!response.ok) {
+        throw new Error(`Failed to send Telegram message: ${response.statusText}`);
+    }
 }
 
 // Updated setWebhook function
@@ -112,8 +115,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const messageId = message.message_id.toString();
         const chatId = message.chat.id;
         const chatName = message.chat.title || 'Private Chat';
+        const text = message.text || '';
 
         console.log("parsed 2", message, fromUser)
+
+        // Check if it's a command or a personal message to the bot
+        if (isCommand(text) || isPersonalMessage(message.chat)) {
+            console.log('Command or personal message detected. Sending to command processor...');
+
+            const response = await fetch('https://www.bren.lol/api/processCommand', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fromUsername: fromUser,
+                    fromUserid: fromUserid,
+                    first_name: message.from.first_name,
+                    last_name: message.from.last_name,
+                    text: text,
+                    messageId,
+                    chatId,
+                    chatName,
+                    isCommand: isCommand(text),
+                    isPersonalMessage: isPersonalMessage(message.chat)
+                }),
+            });
+
+            if (response.ok) {
+                console.log('Command or personal message processed successfully.');
+            } else {
+                console.error('Error processing command or personal message:', await response.text());
+            }
+
+            return res.status(200).json({ ok: true });
+        }
 
         if (!isBotMentioned(message.text)) {
             console.log("Irrelevant Message")
@@ -128,22 +164,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.log("no relevant info")
             return;
         }
-
-        // const tipKey = `${fromUser.username}-${tipInfo.recipient}-${tipInfo.amount}`;
-
-        // // Check if this tip has been processed recently
-        // if (recentTips.has(tipKey)) {
-        //     console.log('Duplicate tip detected, skipping processing');
-        //     return;
-        // }
-
-        // // Add to recent tips
-        // recentTips.add(tipKey);
-
-        // // Remove from recent tips after 10 seconds
-        // setTimeout(() => {
-        //     recentTips.delete(tipKey);
-        // }, 10000);
 
         console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
 

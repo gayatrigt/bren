@@ -1,6 +1,7 @@
 import { User } from '@prisma/client'
 import { GetServerSideProps } from 'next'
 import { getSession, useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { stringify } from 'querystring'
 import React from 'react'
 import SignInButton from '~/components/SIWE'
@@ -16,30 +17,44 @@ type SimplifiedUser = {
 type PageProps = {
     error?: string;
     currUser?: SimplifiedUser;
+    excludeNavbar: boolean;
 }
 
-const TelegramLinkPage: React.FC<PageProps> = ({ error, currUser }) => {
+const TelegramLinkPage: React.FC<PageProps> = ({ error, currUser, excludeNavbar }) => {
     const { data: session } = useSession()
 
     console.log('Current User:', currUser)
 
     return (
         <section className="w-full">
-            <div className="min-h-screen overflow-hidden w-full bg-Y-100 flex flex-col items-center mt-40">
+            <div className="min-h-screen overflow-hidden w-full bg-Y-100 flex flex-col items-center">
                 <img src="/icons/logo.svg" alt="Logo" className="w-24 h-24 mb-4" />
-                <h1 className="text-4xl text-center font-bold">
-                    Link Your Telegram Account
-                </h1>
                 {!session ? (
-                    <div className="mt-6">
+                    <div className="mt-6 flex flex-col items-center">
+                        <h1 className="text-4xl text-center font-bold mb-4">
+                            Connect Your Wallet with Your
+                            <br /> Telegram Account
+                        </h1>
                         <SignInButton />
-
                     </div>
                 ) : (
-                    <div className="mt-6">
-                        <h2 className="text-2xl font-semibold mb-2">Account Details: {session?.user.walletAddress}</h2>
-                        {currUser?.tgUsername && <p>Telegram Username: {currUser.tgUsername}</p>}
-                        <SignInButton />
+                    <div className="mt-6 flex flex-col items-center">
+                        <h1 className="text-4xl text-center font-bold mb-4">
+                            That's a success bren!
+                        </h1>
+                        <h2 className="text-xl font-normal mb-6">Wallet Address: {session?.user.walletAddress}
+                            <br />is connected with
+                            <br /> Telegram Username: {currUser?.tgUsername}
+                        </h2>
+                        <Link href="/">
+                            <button
+                                className="rounded border border-p-100 bg-white px-4 py-2 font-bold text-pu-100
+               shadow-[3px_3px_0px_0px_#000] text-lg hover:bg-pu-100 hover:text-white transition-colors"
+                            >
+                                Checkout bren Leaderboard
+                            </button>
+                        </Link>
+
                     </div>
                 )}
             </div>
@@ -52,7 +67,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
 
     if (!session) {
         return {
-            props: { error: 'Unauthorized' }
+            props: { error: 'Unauthorized', excludeNavbar: true }
         }
     }
 
@@ -62,7 +77,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
 
     if (!telegramUsername) {
         return {
-            props: { error: 'Missing TG username' }
+            props: { error: 'Missing TG username', excludeNavbar: true }
         }
     }
 
@@ -74,7 +89,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
 
     if (isTelegramUsernameLinked) {
         return {
-            props: { error: 'Telegram username is already linked', currUser: JSON.parse(JSON.stringify(isTelegramUsernameLinked)) }
+            props: { error: 'Telegram username is already linked', currUser: JSON.parse(JSON.stringify(isTelegramUsernameLinked)), excludeNavbar: true }
         }
     }
 
@@ -95,12 +110,12 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
         })
 
         return {
-            props: { currUser }
+            props: { currUser, excludeNavbar: true }
         }
     } catch (error) {
         console.error('Error updating user:', error)
         return {
-            props: { error: 'Failed to update user' }
+            props: { error: 'Failed to update user', excludeNavbar: true }
         }
     }
 }

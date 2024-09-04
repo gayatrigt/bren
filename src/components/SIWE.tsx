@@ -4,6 +4,12 @@ import { useRouter } from 'next/router'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { SiweMessage } from 'siwe'
 import { getCsrfToken } from 'next-auth/react'
+import classNames from 'classnames'
+import { useEffect, useState } from 'react'
+
+const buttonClasses = classNames(
+    "rounded border border-p-100 bg-white py-2 px-4 font-bold text-pu-100 shadow-[3px_3px_0px_0px_#000] text-lg hover:bg-pu-100 hover:text-white transition-colors"
+);
 
 function SignInButton() {
     const { openConnectModal } = useConnectModal()
@@ -72,7 +78,7 @@ function SignInButton() {
     }
 
     return (
-        <button onClick={session ? () => signOut() : handleAuth}>
+        <button onClick={session ? () => signOut() : handleAuth} className={buttonClasses}>
             {session ? 'Sign Out' : 'Sign In with Ethereum'}
         </button>
     )
