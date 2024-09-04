@@ -40,7 +40,7 @@ const TelegramLinkPage: React.FC<PageProps> = ({ error, currUser, excludeNavbar 
                 ) : (
                     <div className="mt-6 flex flex-col items-center">
                         <h1 className="text-4xl text-center font-bold mb-4">
-                            That's a success bren!
+                            That is a success bren!
                         </h1>
                         <h2 className="text-xl font-normal mb-6">Wallet Address: {session?.user.walletAddress}
                             <br />is connected with

@@ -25,6 +25,7 @@ const config = {
     "@typescript-eslint/no-non-null-asserted-optional-chain": "warn",
     "@typescript-eslint/no-unnecessary-type-assertion": "warn",
     "@typescript-eslint/no-floating-promises": "warn",
+    "@typescript-eslint/non-nullable-type-assertion-style": "warn",
     "@typescript-eslint/restrict-plus-operands": "warn",
     "@typescript-eslint/no-unsafe-return": "warn",
     "@typescript-eslint/prefer-optional-chain": "warn",
