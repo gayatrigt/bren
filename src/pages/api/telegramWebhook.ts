@@ -97,16 +97,16 @@ function isPersonalMessage(chat: any): boolean {
 
 // Main webhook handler
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method === 'POST') {
+    if (req.method === 'POST' || req.method === 'GET') {
         // Acknowledge receipt immediately
-
         const update = req.body;
 
         console.log("webhook received 1", update)
 
         // Process the message asynchronously
         if (!update.message?.text) {
-            throw new Error("Could not find text ")
+            console.log("Irrelevant message: no text found");
+            return res.status(200).json({ ok: true });
         }
 
         const message = update.message;
@@ -147,7 +147,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             } else {
                 console.error('Error processing command or personal message:', await response.text());
             }
-
             return res.status(200).json({ ok: true });
         }
 
@@ -162,7 +161,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (!(fromUser && tipInfo)) {
             console.log("no relevant info")
-            return;
+            return res.status(200).json({ ok: true });
         }
 
         console.log('Tip info parsed successfully. Calling processTip API...', fromUser);
