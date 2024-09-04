@@ -153,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (!isBotMentioned(message.text)) {
             console.log("Irrelevant Message")
-            return;
+            return res.status(200).json({ ok: true });;
         }
 
         const tipInfo = parseTipMessage(message.text, message.reply_to_message);
