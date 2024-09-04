@@ -5,7 +5,7 @@ const SectionThree = () => {
     {
       question: "What is $bren?",
       answer:
-        "$bren is a community recognition system on Farcaster that allows users to tip and recognize others for their based contributions using points and personalized shoutouts, fostering a culture of appreciation and collaboration.",
+        "$bren is a onchain point system that rewards for various onchain activities. Currently we are live on Farcaster and Telegram where users can tip and recognize others for their based contributions using points and personalized shoutouts, fostering a culture of appreciation and collaboration.",
     },
     {
       question: "How do I join $bren?",

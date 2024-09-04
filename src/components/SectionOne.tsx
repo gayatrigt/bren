@@ -12,7 +12,7 @@ const SectionOne = () => {
     {
       title: "Tipping Weekly",
       icon: "/icons/tip_jar.svg",
-      text: "Every week, you’ll receive a $bren allocation to award points and shoutouts to other users directly from Warpcast.",
+      text: "Every week, you’ll receive a $bren allocation to award points and shoutouts to other users directly from Warpcast or Telegram.",
       number: "02",
     },
     {
@@ -22,9 +22,9 @@ const SectionOne = () => {
       number: "03",
     },
     {
-      title: "Increase BREN cred",
+      title: "Build Onchain",
       icon: "/icons/star.svg",
-      text: "Boost your BREN cred (& weekly allocation) by recognizing new people, actively engaging with the community, and showcasing your based contributions.",
+      text: "Boost your BREN cred by building onchain and showcasing your based contributions. (Coming Soon)",
       number: "04",
     },
   ];
@@ -38,7 +38,7 @@ const SectionOne = () => {
           How Bren Works
         </h1>
         <h2 className="mb-5 text-center text-sm text-W-100 lg:mb-[60px] lg:text-[22px]">
-          Recognize and Reward Based Contributions
+          Recognize, Reward, and Earn for Onchain Contributions
         </h2>
 
         <div className="grid items-stretch gap-12 lg:grid-cols-2">
