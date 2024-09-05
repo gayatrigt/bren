@@ -114,21 +114,45 @@ const LeaderboardListing: React.FC = () => {
 
       console.log("Fetching user details...");
 
-      // Fetch user details
-      const fids = data.data.map((ranking) => ranking.fid).join(",");
-      const userResponse = await fetch(`/api/neynar-users?fids=${fids}`);
-      if (!userResponse.ok) {
-        throw new Error("Failed to fetch user details");
-      }
-      const userData: { users: User[] } = await userResponse.json();
+      // Fetch user details one by one
+      const fetchUserDetails = async (fid: number | null | undefined): Promise<User | null> => {
+        if (fid == null) {
+          console.warn(`Skipping fetch for null or undefined FID`);
+          return null;
+        }
 
-      console.log("User data:", userData);
+        try {
+          const userResponse = await fetch(`/api/neynar-users?fids=${fid}`);
+          if (!userResponse.ok) {
+            console.warn(`Failed to fetch user details for FID ${fid}`);
+            return null;
+          }
+          const userData: { users: User[] } = await userResponse.json();
+          return userData.users[0] || null;
+        } catch (error) {
+          console.error(`Error fetching user details for FID ${fid}:`, error);
+          return null;
+        }
+      };
 
-      // Combine ranking data with user details
-      const enrichedRankings: EnrichedRankingData[] = data.data.map((ranking) => ({
-        ...ranking,
-        userDetails: userData.users.find((user) => user.fid === ranking.fid),
-      }));
+      // Filter out null or undefined FIDs before fetching
+      const validFids = data.data.filter(ranking => ranking.fid != null).map(ranking => ranking.fid);
+      const userDetailsPromises = validFids.map(fetchUserDetails);
+      const userDetailsResults = await Promise.all(userDetailsPromises);
+
+      console.log("User details results:", userDetailsResults);
+
+      // Combine ranking data with user details, skipping users without Neynar details
+      const enrichedRankings: EnrichedRankingData[] = data.data.reduce((acc, ranking) => {
+        const userDetails = userDetailsResults.find(details => details?.fid === ranking.fid);
+        if (userDetails) {
+          acc.push({
+            ...ranking,
+            userDetails,
+          });
+        }
+        return acc;
+      }, [] as EnrichedRankingData[]);
 
       const filteredAndSortedRankings = filterAndSortRankings(enrichedRankings);
       setAllRankings(filteredAndSortedRankings);

@@ -10,13 +10,13 @@ const SectionThree = () => {
     {
       question: "How do I join $bren?",
       answer:
-        "To join $bren, you need to be allowlisted, this is based on your Farcaster contributions, $BUILD onchain actions or receive an invitation from an existing user. Once approved, connect your wallet, and start engaging with the community.",
+        "To join $bren, you need to be allowlisted, this is based on your Farcaster contributions, onchain actions or download Onboard app. Once approved, connect your wallet, and start engaging with the community.",
     },
-    {
-      question: "What are the based values?",
-      answer:
-        "The based values are integrity, teamwork, tenacity, creativity, and optimism. These values guide the behavior and contributions of the $bren community.",
-    },
+    // {
+    //   question: "What are the based values?",
+    //   answer:
+    //     "The based values are integrity, teamwork, tenacity, creativity, and optimism. These values guide the behavior and contributions of the $bren community.",
+    // },
     {
       question: "How does the leaderboard work?",
       answer:

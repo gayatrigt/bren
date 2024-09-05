@@ -6,7 +6,7 @@ const SectionOne = () => {
     {
       title: "Join the network",
       icon: "/icons/network.svg",
-      text: "Simply get started with joining the Bren network by being allow-listed or invited by an existing bren.",
+      text: "Simply get started with joining the Bren network by being allow-listed or downloading Onboard.",
       number: "01",
     },
     {
@@ -18,7 +18,7 @@ const SectionOne = () => {
     {
       title: "Move Upward",
       icon: "/icons/icons_park.svg",
-      text: "Climb the real-time leaderboard. Your BREN cred (points) increaase based on your recognitions (shoutouts given and received), and contribution of your invites.",
+      text: "Climb the real-time leaderboard. Your BREN cred (points) increaase based on your recognitions (shoutouts given and received), and activities onchain.",
       number: "03",
     },
     {

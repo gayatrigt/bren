@@ -68,9 +68,9 @@ const Hero = () => {
             <div className=" mx-auto flex w-full max-w-[380px] items-center justify-center rounded-xl bg-pu-100 p-2 lg:p-0">
               <div className="relative h-auto w-full max-w-[360px]">
                 <img
-                  src="/icons/tweet_1.png"
+                  src="/icons/tweet_2.png"
                   alt="Tweet"
-                  className="object-contain"
+                  className="object-center"
                 />
               </div>
             </div>
