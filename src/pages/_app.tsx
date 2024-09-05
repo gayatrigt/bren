@@ -21,6 +21,11 @@ const MyApp: AppType<{ session: any, excludeNavbar: boolean }> = ({
           <meta property="og:description" content="Recognize your Based frens with $bren" />
           <meta property="og:type" content="" />
           <meta property="og:image" content="" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/icon-bren.png" />
+          <link rel="icon" type="image/png" sizes="32x32" href="/icon-bren.png" />
+          <link rel="icon" type="image/png" sizes="16x16" href="/icon-bren.png" />
+          <link rel="manifest" href="/icon-bren.png" />
+          <link rel="shortcut icon" href="/icon-bren.png" />
         </Head>
         {excludeNavbar ? (
           <Component {...pageProps} />
