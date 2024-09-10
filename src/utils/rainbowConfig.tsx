@@ -29,7 +29,7 @@ const customBase: Chain = {
 
 const config = getDefaultConfig({
     appName: 'Bren',
-    projectId: 'YOUR_PROJECT_ID',
+    projectId: 'b5dbd59851af892797310b9644d1f2ec',
     chains: [customBase],
     ssr: true, // If your dApp uses server side rendering (SSR)
 });
