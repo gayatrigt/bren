@@ -3,6 +3,22 @@ import { NextApiRequest, NextApiResponse } from 'next';
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
+async function sendWelcomeMessage(chatId: number) {
+    const welcomeMessage = `
+Hey Brens, 
+
+Here's how you can interact with me:
+• Tip other members: Mention me (@brenisbot) and use the format "10 $bren @username" to give Bren points.
+• Check your balance: Use /checkpoints to see your current Bren points.
+
+Know more about bren here- https://www.bren.lol/
+
+Happy building, and let's make the onchain world awesome together! 🚀
+`;
+
+    await sendTelegramDM(chatId, welcomeMessage);
+}
+
 
 export async function sendTelegramDM(userId: number, text: string, parse_mode: 'HTML' | 'Markdown' | 'MarkdownV2' = 'HTML') {
     const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -102,6 +118,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const update = req.body;
 
         console.log("webhook received 1", update)
+
+        // Check if the bot was added to a group
+        if (update.message?.new_chat_member?.username === 'brenisbot') {
+            console.log("Bot added to group");
+            const chatId = update.message.chat.id;
+            await sendWelcomeMessage(chatId);
+            return res.status(200).json({ ok: true });
+        }
 
         // Process the message asynchronously
         if (!update.message?.text) {

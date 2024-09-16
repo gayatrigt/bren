@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 message = await handleCheckPoints(fromUsername);
                 break;
             default:
-                message = 'Please use the following commands:\n/connectwallet\n/checkallowance\n/values\n/checkpoints';
+                message = 'Hey bren!\nThat is not a valid command. Please use:\n/connectwallet\n/checkallowance\n/values\n/checkpoints';
         }
 
         // Send the message back to the user via Telegram
