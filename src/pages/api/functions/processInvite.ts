@@ -6,7 +6,6 @@ import { Cast } from '~/contracts/NeynarCast';
 import { getStartOfWeek } from '../getUserStats';
 import { setUserAllowance } from './setAllowance';
 import { checkWhitelist } from './checkWhiteList';
-import { CheckEligibilityAPIResponse } from '../whitelist/fbi-token';
 import { fids } from '../whitelist/fids';
 
 export async function processInvite(invitorFid: number, cast: Cast) {
@@ -180,20 +179,25 @@ async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
     // If not in fids object, call the local API
     try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/whitelist/fbi-token?fid=${fromFid}`);
-        const result: CheckEligibilityAPIResponse = await response.json();
 
-        if (result.data.TokenBalances?.TokenBalance === null) {
-            console.log('User is not whitelisted');
-            return false;
-        } else if (result.data.TokenBalances?.TokenBalance[0]?.tokenId === '1') {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.isWhitelisted === true) {
             console.log('User is whitelisted');
             return true;
+        } else if (result.isWhitelisted === false) {
+            console.log('User is not whitelisted');
+            return false;
         } else {
             console.log('Unexpected result from whitelist API');
-            return undefined
+            return undefined;
         }
     } catch (error) {
         console.error('Error checking whitelist:', error);
-        return undefined
+        return undefined;
     }
 }
