@@ -2,39 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { env } from '~/env';
 
-const AIRSTACK_API_URL = 'https://api.airstack.xyz/graphql';
 export const config = {
     runtime: "edge"
 }
 
-export interface CheckEligibilityAPIResponse {
-    data: Data
-}
-
-export interface Data {
-    TokenBalances?: TokenBalances
-}
-
-export interface TokenBalances {
-    TokenBalance: TokenBalance[]
-}
-
-export interface TokenBalance {
-    tokenId: string
-}
-
-
-const createQuery = (fc_fid: string) => `
-query MyQuery {
-  TokenBalances(
-    input: {filter: {tokenAddress: {_eq: "0x1de473537591a665687defbe0f48a42d3cfa9556"}, owner: {_eq: "fc_fid:${fc_fid}"}}, blockchain: base}
-  ) {
-    TokenBalance {
-      tokenId
-    }
-  }
-}
-`;
+const NEYNAR_API_URL = 'https://api.neynar.com/v2/farcaster/user/bulk';
+const ALCHEMY_API_URL = 'https://base-mainnet.g.alchemy.com/nft/v3';
+const NFT_CONTRACT_ADDRESSES = [
+    '0x1de473537591a665687defbe0f48a42d3cfa9556',
+    '0x59ca61566C03a7Fb8e4280d97bFA2e8e691DA3a6',
+    '0x05df46564c489a92492400298c88f032c8c21e96'
+];
 
 export default async function GET(req: NextRequest) {
     console.log("🚀 ~ GET ~ req.url:", env.BASE_URL + req.url)
@@ -47,34 +25,47 @@ export default async function GET(req: NextRequest) {
         return NextResponse.json({ error: "FID is required" }, { status: 400 });
     }
 
-    const apiKey = env.AIRSTACK_API_KEY
+    const neynarApiKey = env.NEYNAR_API_KEY;
+    const alchemyApiKey = env.ALCHEMY_API_KEY;
 
-    if (!apiKey) {
-        return NextResponse.json({ error: "Airstack API key is missing" }, { status: 500 });
+    if (!neynarApiKey || !alchemyApiKey) {
+        return NextResponse.json({ error: "API keys are missing" }, { status: 500 });
     }
 
     try {
-        console.log(1)
-        const query = createQuery(fid);
-        console.log(2)
-
-        const response = await axios.post(AIRSTACK_API_URL, {
-            query: query,
-        }, {
+        // Step 1: Get Ethereum addresses from Neynar
+        const neynarResponse = await axios.get(`${NEYNAR_API_URL}?fids=${fid}`, {
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
+                'accept': 'application/json',
+                'api_key': neynarApiKey
+            }
         });
-        console.log(3)
 
-        const data = response.data;
+        const ethAddresses = neynarResponse.data.users[0].verified_addresses.eth_addresses;
+        console.log("Ethereum addresses:", ethAddresses);
 
-        console.log("token", data)
+        // Step 2: Check if any address holds any of the NFTs
+        let isWhitelisted = false;
 
-        return NextResponse.json(data, { status: 200 });
+        for (const address of ethAddresses) {
+            const alchemyResponse = await axios.get(`${ALCHEMY_API_URL}/${alchemyApiKey}/getNFTsForOwner`, {
+                params: {
+                    owner: address,
+                    contractAddresses: NFT_CONTRACT_ADDRESSES,
+                    withMetadata: false,
+                    pageSize: 100
+                }
+            });
+
+            if (alchemyResponse.data.ownedNfts.length > 0) {
+                isWhitelisted = true;
+                break;
+            }
+        }
+
+        return NextResponse.json({ isWhitelisted }, { status: 200 });
     } catch (error) {
         console.error("Error:", error);
-        return NextResponse.json({ error: error }, { status: 500 });
+        return NextResponse.json({ error: "An error occurred while checking eligibility" }, { status: 500 });
     }
 }

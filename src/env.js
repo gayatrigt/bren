@@ -24,7 +24,8 @@ export const env = createEnv({
     DUNE_API_KEY: z.string(),
     AIRSTACK_API_KEY: z.string(),
     NEXTAUTH_URL: z.string(),
-    NEXTAUTH_SECRET: z.string()
+    NEXTAUTH_SECRET: z.string(),
+    ALCHEMY_API_KEY: z.string()
     // DISCORD_CLIENT_ID: z.string(),
     // DISCORD_CLIENT_SECRET: z.string(),
   },
@@ -52,7 +53,8 @@ export const env = createEnv({
     DUNE_API_KEY: process.env.DUNE_API_KEY,
     AIRSTACK_API_KEY: process.env.AIRSTACK_API_KEY,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    ALCHEMY_API_KEY: process.env.ALCHEMY_API_KEY
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

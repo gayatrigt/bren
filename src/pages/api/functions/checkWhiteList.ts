@@ -26,18 +26,18 @@ interface ChannelFollowCheckResponse {
 async function checkWhitelist(fid: number, walletAddress: string, isPowerBadge: boolean): Promise<UserType | 'NOT_WHITELISTED'> {
     try {
         // 1. Check if user is splitter or payitforward
-        const userType = await checkUserType(walletAddress);
-        if (userType === 'splitter') {
-            return UserType.SPLITTERS;
-        } else if (userType === 'payItForward') {
-            return UserType.ALLIES;
-        }
+        // const userType = await checkUserType(walletAddress);
+        // if (userType === 'splitter') {
+        //     return UserType.SPLITTERS;
+        // } else if (userType === 'payItForward') {
+        //     return UserType.ALLIES;
+        // }
 
         // 2. Check if power badge holder
-        const isPowerBadgeHolder = isPowerBadge
-        if (isPowerBadgeHolder) {
-            return UserType.POWER_BADGE;
-        }
+        // const isPowerBadgeHolder = isPowerBadge
+        // if (isPowerBadgeHolder) {
+        //     return UserType.POWER_BADGE;
+        // }
 
         // // 3. Check if follows bren
         // const followsBren = await checkIfFollowsBrenChannel(fid);
@@ -46,10 +46,10 @@ async function checkWhitelist(fid: number, walletAddress: string, isPowerBadge: 
         // }
 
         // 4. Check if invited in database
-        const isInvited = await checkIfInvited(fid, walletAddress);
-        if (isInvited) {
-            return UserType.INVITED;
-        }
+        // const isInvited = await checkIfInvited(fid, walletAddress);
+        // if (isInvited) {
+        //     return UserType.INVITED;
+        // }
 
         const isWhitelisted = await checkEligibility(fid);
         if (isWhitelisted) {
