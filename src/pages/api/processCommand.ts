@@ -37,8 +37,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case '/values':
                 message = await handleValue();
                 break;
+            case '/checkpoints':
+                message = await handleCheckPoints(fromUsername);
+                break;
             default:
-                message = 'Please use the following commands:\n/connectwallet\n/checkallowance\n/values';
+                message = 'Please use the following commands:\n/connectwallet\n/checkallowance\n/values\n/checkpoints';
         }
 
         // Send the message back to the user via Telegram
@@ -88,6 +91,28 @@ async function handleCheckAllowance(username: string): Promise<string> {
     const totalAllowance = 500;
     const remainingAllowance = totalAllowance - (tipsSentThisWeek._sum.amount || 0);
     return `Your remaining allowance for this week is: ${remainingAllowance.toFixed(2)}`;
+}
+
+async function handleCheckPoints(username: string): Promise<string> {
+    const user = await db.user.findUnique({
+        where: { tgUsername: username },
+        select: { id: true }
+    });
+
+    if (!user) {
+        return 'User not found. Please connect your wallet first.';
+    }
+
+    const userRankings = await db.userRankings.findUnique({
+        where: { userId: user.id },
+        select: { tipsReceived: true }
+    });
+
+    if (!userRankings) {
+        return 'No ranking information found for this user.';
+    }
+
+    return `You have ${userRankings.tipsReceived.toFixed(2)} $bren points in total.`
 }
 
 async function handleValue(): Promise<string> {
