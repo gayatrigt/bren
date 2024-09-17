@@ -22,6 +22,7 @@ export async function processTip(
         // Convert hashtagValue to lowercase for case-insensitive comparison
         const lowercaseHashtag = hashtagValue.toLowerCase();
         console.log('Lowercase Hashtag:', lowercaseHashtag);
+
         // Check if the fromFid is following brenbot
         const following = await isFollowing(fromFid);
         console.log('Is following brenbot:', following);
@@ -43,21 +44,21 @@ export async function processTip(
         // }
 
         // Check if the hashtag is valid
-        if (!validHashtags.includes(lowercaseHashtag)) {
-            const result = await botReplyFail(
-                castHash,
-                `Hey @${fromUsername}!\nYou cannot tip without a valid value. Please use one of the following hashtags: ${validHashtags.map(tag => '#' + tag.charAt(0).toUpperCase() + tag.slice(1)).join(", ")}.`,
-                "You cannot tip Bren without a valid value",
-                currentAllowance
-            );
+        // if (!validHashtags.includes(lowercaseHashtag)) {
+        //     const result = await botReplyFail(
+        //         castHash,
+        //         `Hey @${fromUsername}!\nYou cannot tip without a valid value. Please use one of the following hashtags: ${validHashtags.map(tag => '#' + tag.charAt(0).toUpperCase() + tag.slice(1)).join(", ")}.`,
+        //         "You cannot tip Bren without a valid value",
+        //         currentAllowance
+        //     );
 
-            if (result.success) {
-                console.log('Reply posted successfully:', result.castHash);
-            } else {
-                console.error('Failed to post reply:', result.message);
-            }
-            return; // Exit the function early
-        }
+        //     if (result.success) {
+        //         console.log('Reply posted successfully:', result.castHash);
+        //     } else {
+        //         console.error('Failed to post reply:', result.message);
+        //     }
+        //     return; // Exit the function early
+        // }
 
         if (currentAllowance >= tipAmount) {
             const toDetails = await getUserById(toFid);

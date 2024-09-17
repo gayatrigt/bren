@@ -118,7 +118,7 @@ const ProfilePage = () => {
           {userData.weeklyAllowance && (
             <div className="border-B-12 rounded-[32px] border bg-[rgba(43,0,53,0.04)] px-10 py-[60px] ">
               <h1 className="mb-3 text-xl text-pu-100">Weekly Allocation</h1>
-              <h2 className="text-[48px] font-bold text-pu-100">300</h2>
+              <h2 className="text-[48px] font-bold text-pu-100">500</h2>
               {/* <p className="mt-3 text-xl text-pu-100">
                 Based on your bren cred, frequency of shoutouts and contributions
                 of your invites.
