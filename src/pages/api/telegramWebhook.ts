@@ -9,7 +9,8 @@ Hey Brens,
 
 Here's how you can interact with me:
 • Tip other members: Mention me (@brenisbot) and use the format "10 $bren @username" to give Bren points.
-• Check your balance: Use /checkpoints to see your current Bren points.
+• To start tipping, link you wallet by DMing me /connectwallet
+• Check your balance: DM me /checkpoints to see your current Bren points.
 
 Know more about bren here- https://www.bren.lol/
 

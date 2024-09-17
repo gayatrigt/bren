@@ -39,8 +39,8 @@ export interface Pagination {
 export interface User {
   fid?: number | undefined;
   username?: string;
-  display_name?: string;
-  pfp_url?: string;
+  display_name?: string | null;
+  pfp_url?: string | null;
 }
 
 export interface EnrichedRankingData extends RankingData {

@@ -75,13 +75,14 @@ model FarcasterDetails {
 }
 
 model TelegramDetails {
-  id         String  @id @default(uuid())
-  userId     String  @unique
-  idTG       Float?
-  first_name String?
-  last_name  String?
-  pfp        String?
-  user       User    @relation(fields: [userId], references: [id])
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  idTG         Float?
+  first_name   String?
+  display_name String?
+  last_name    String?
+  pfp          String?
+  user         User    @relation(fields: [userId], references: [id])
 }
 
 model ProcessedMessage {

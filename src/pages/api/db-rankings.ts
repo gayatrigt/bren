@@ -34,7 +34,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 include: {
                     user: {
                         select: {
-                            fid: true
+                            fid: true,
+                            walletAddress: true
                         }
                     }
                 }
@@ -48,6 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const transformedUsers = users.map((user, index) => ({
             ...user,
             fid: user.user?.fid,
+            walletAddress: user.user.walletAddress,
             rank: skip + index + 1, // Calculate rank based on the current page and index
             user: undefined // Remove the nested user object
         }))
