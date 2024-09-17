@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { cn } from "~/utils/helpers";
 import { FaChevronDown } from "react-icons/fa6";
-import { createIcon } from '@download/blockies';
+import { createIcon, BlockiesOptions } from '@download/blockies';
 
 export interface RankingData {
   fid: number | null;

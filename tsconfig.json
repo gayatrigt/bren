@@ -49,7 +49,8 @@
     "**/*.js",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    "seed-db.mjs"
+    "seed-db.mjs",
+    "src/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
