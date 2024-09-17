@@ -71,6 +71,12 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
         }
     }
 
+    if (!session.user.walletAddress) {
+        return {
+            props: { error: 'No wallet connected', excludeNavbar: true }
+        }
+    }
+
     const telegramUsername = context.query.telegramUsername as string | undefined
 
     console.log('Telegram Username:', telegramUsername)
@@ -87,30 +93,85 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
         }
     })
 
-    if (isTelegramUsernameLinked) {
-        return {
-            props: { error: 'Telegram username is already linked', currUser: JSON.parse(JSON.stringify(isTelegramUsernameLinked)), excludeNavbar: true }
-        }
-    }
+    // if (isTelegramUsernameLinked) {
+    //     return {
+    //         props: { error: 'Telegram username is already linked', currUser: JSON.parse(JSON.stringify(isTelegramUsernameLinked)), excludeNavbar: true }
+    //     }
+    // }
 
     try {
-        const currUser = await db.user.update({
+        // Check if the wallet address exists in the user table
+        const existingUser = await db.user.findUnique({
             where: {
-                id: session.user.id
-            },
-            data: {
-                tgUsername: telegramUsername
-            },
-            select: {
-                id: true,
-                walletAddress: true,
-                fid: true,
-                tgUsername: true,
+                walletAddress: session.user.walletAddress
             }
         })
 
-        return {
-            props: { currUser, excludeNavbar: true }
+        if (existingUser) {
+            // If the user exists, update the tgUsername
+            const updatedUser = await db.user.update({
+                where: {
+                    id: existingUser.id
+                },
+                data: {
+                    tgUsername: telegramUsername
+                },
+                select: {
+                    id: true,
+                    walletAddress: true,
+                    fid: true,
+                    tgUsername: true,
+                }
+            })
+
+            return {
+                props: { currUser: JSON.parse(JSON.stringify(updatedUser)), excludeNavbar: true }
+            }
+        } else {
+            // Check if the tg username exists in the user table
+            const existingUserTG = await db.user.findUnique({
+                where: {
+                    tgUsername: telegramUsername
+                }
+            })
+
+            if (existingUserTG) {
+                const newUser = await db.user.update({
+                    where: {
+                        tgUsername: telegramUsername
+                    },
+                    data: {
+                        walletAddress: session.user.walletAddress,
+                        tgUsername: telegramUsername
+                    },
+                    select: {
+                        id: true,
+                        walletAddress: true,
+                        fid: true,
+                        tgUsername: true,
+                    }
+                })
+                return {
+                    props: { currUser: JSON.parse(JSON.stringify(newUser)), excludeNavbar: true }
+                }
+            } else {
+                // If the user doesn't exist, create a new user with the wallet address as tgUsername
+                const newUser = await db.user.create({
+                    data: {
+                        walletAddress: session.user.walletAddress,
+                        tgUsername: telegramUsername
+                    },
+                    select: {
+                        id: true,
+                        walletAddress: true,
+                        fid: true,
+                        tgUsername: true,
+                    }
+                })
+                return {
+                    props: { currUser: JSON.parse(JSON.stringify(newUser)), excludeNavbar: true }
+                }
+            }
         }
     } catch (error) {
         console.error('Error updating user:', error)

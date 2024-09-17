@@ -104,6 +104,31 @@ export async function processWebhookData(hash: string) {
             console.log('User already exists in the database');
             // Perform actions for existing user
 
+            const userFC = await db.user.update({
+                where: {
+                    walletAddress: fromAddress
+                },
+                data: {
+                    fid: fromFid,
+
+                },
+                select: {
+                    id: true,
+                }
+            })
+
+            await db.farcasterDetails.update({
+                where: {
+                    userId: userFC.id
+                },
+                data: {
+                    fid: fromFid,
+                    username: fromUsername,
+                    pfp: neynarCast.author.pfp_url,
+                    display_name: neynarCast.author.display_name
+                }
+            })
+
             const currentAllowance = await getUserCurrentAllowanceByWalletAddress(fromAddress);
             if (currentAllowance === undefined) {
                 console.error(`Unable to retrieve current allowance for wallet address: ${fromAddress}`);
@@ -293,7 +318,7 @@ const checkUserExists = async (fid: number, walletAddress: string) => {
     try {
         const user = await db.user.findUnique({
             where: {
-                fid: fid
+                walletAddress: walletAddress
             },
             include: {
                 farcasterDetails: true
