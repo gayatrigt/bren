@@ -9,6 +9,7 @@ import {
   Rankings,
   Pagination,
   UserRank,
+  RankingData,
 } from "~/components/SectionTwo";
 import { cn } from "~/utils/helpers";
 
@@ -99,6 +100,108 @@ const LeaderboardListing: React.FC = () => {
     }
   };
 
+  // const fetchRankings = async () => {
+  //   setLoading(true);
+  //   try {
+  //     console.log("Fetching rankings...");
+  //     const response = await fetch(
+  //       `/api/db-rankings?sort=${selectedTab?.key}&page=${currentPage}&limit=${pagination.itemsPerPage}`,
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch rankings");
+  //     }
+  //     const data: ApiResponse = await response.json();
+  //     console.log("Ranking data:", data);
+
+  //     console.log("Fetching user details...");
+
+  //     // Fetch user details one by one
+  //     const fetchUserDetails = async (fid: number | null | undefined): Promise<User | null> => {
+  //       if (fid == null) {
+  //         console.warn(`Skipping fetch for null or undefined FID`);
+  //         return null;
+  //       }
+
+  //       try {
+  //         const userResponse = await fetch(`/api/neynar-users?fids=${fid}`);
+  //         if (!userResponse.ok) {
+  //           console.warn(`Failed to fetch user details for FID ${fid}`);
+  //           return null;
+  //         }
+  //         const userData: { users: User[] } = await userResponse.json();
+  //         return userData.users[0] || null;
+  //       } catch (error) {
+  //         console.error(`Error fetching user details for FID ${fid}:`, error);
+  //         return null;
+  //       }
+  //     };
+
+  //     // Filter out null or undefined FIDs before fetching
+  //     const validFids = data.data.filter(ranking => ranking.fid != null).map(ranking => ranking.fid);
+  //     const userDetailsPromises = validFids.map(fetchUserDetails);
+  //     const userDetailsResults = await Promise.all(userDetailsPromises);
+
+  //     console.log("User details results:", userDetailsResults);
+
+  //     // Combine ranking data with user details, skipping users without Neynar details
+  //     const enrichedRankings: EnrichedRankingData[] = data.data.reduce((acc, ranking) => {
+  //       const userDetails = userDetailsResults.find(details => details?.fid === ranking.fid);
+  //       if (userDetails) {
+  //         acc.push({
+  //           ...ranking,
+  //           userDetails,
+  //         });
+  //       }
+  //       return acc;
+  //     }, [] as EnrichedRankingData[]);
+
+  //     const filteredAndSortedRankings = filterAndSortRankings(enrichedRankings);
+  //     setAllRankings(filteredAndSortedRankings);
+
+  //     let userRankingIndex = -1;
+  //     const rankingsWithoutCurrentUser = filteredAndSortedRankings.filter((ranking, index) => {
+  //       if (ranking.walletAddress?.toLowerCase() === address?.toLowerCase()) {
+  //         userRankingIndex = index;
+  //         return false;
+  //       }
+  //       return true;
+  //     });
+
+  //     // Assign continuous ranks to displayed rankings
+  //     const displayedRankingsWithRanks = rankingsWithoutCurrentUser.map((ranking, index) => ({
+  //       ...ranking,
+  //       displayRank: index >= userRankingIndex ? index + 2 : index + 1
+  //     }));
+
+  //     setDisplayedRankings(displayedRankingsWithRanks);
+
+  //     // Update pagination based on displayed rankings
+  //     const newTotalItems = displayedRankingsWithRanks.length;
+  //     const newTotalPages = Math.ceil(newTotalItems / pagination.itemsPerPage);
+  //     setFilteredPagination({
+  //       ...pagination,
+  //       totalItems: newTotalItems,
+  //       totalPages: newTotalPages,
+  //       currentPage: Math.min(currentPage, newTotalPages),
+  //     });
+
+  //     // Set user ranking
+  //     if (userRankingIndex !== -1) {
+  //       setUserRanking({
+  //         ...filteredAndSortedRankings[userRankingIndex],
+  //         rank: userRankingIndex + 1,
+  //       } as UserRank);
+  //     } else {
+  //       setUserRanking(null);
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchRankings = async () => {
     setLoading(true);
     try {
@@ -114,52 +217,88 @@ const LeaderboardListing: React.FC = () => {
 
       console.log("Fetching user details...");
 
-      // Fetch user details one by one
-      const fetchUserDetails = async (fid: number | null | undefined): Promise<User | null> => {
-        if (fid == null) {
-          console.warn(`Skipping fetch for null or undefined FID`);
-          return null;
-        }
-
+      // Helper function to fetch user details by FIDs
+      const fetchUserDetailsByFids = async (fids: number[]): Promise<User[]> => {
         try {
-          const userResponse = await fetch(`/api/neynar-users?fids=${fid}`);
+          const userResponse = await fetch(`/api/neynar-users?fids=${fids.join(',')}`);
           if (!userResponse.ok) {
-            console.warn(`Failed to fetch user details for FID ${fid}`);
-            return null;
+            console.warn(`Failed to fetch user details for FIDs`);
+            return [];
           }
           const userData: { users: User[] } = await userResponse.json();
-          return userData.users[0] || null;
+          return userData.users;
         } catch (error) {
-          console.error(`Error fetching user details for FID ${fid}:`, error);
-          return null;
+          console.error(`Error fetching user details for FIDs:`, error);
+          return [];
         }
       };
 
-      // Filter out null or undefined FIDs before fetching
-      const validFids = data.data.filter(ranking => ranking.fid != null).map(ranking => ranking.fid);
-      const userDetailsPromises = validFids.map(fetchUserDetails);
-      const userDetailsResults = await Promise.all(userDetailsPromises);
-
-      console.log("User details results:", userDetailsResults);
-
-      // Combine ranking data with user details, skipping users without Neynar details
-      const enrichedRankings: EnrichedRankingData[] = data.data.reduce((acc, ranking) => {
-        const userDetails = userDetailsResults.find(details => details?.fid === ranking.fid);
-        if (userDetails) {
-          acc.push({
-            ...ranking,
-            userDetails,
-          });
+      // Helper function to fetch user details by wallet addresses
+      const fetchUserDetailsByAddresses = async (addresses: string[]): Promise<Record<string, User[]>> => {
+        try {
+          const userResponse = await fetch(`/api/neynar-users-by-address?addresses=${addresses.join(',')}`);
+          if (!userResponse.ok) {
+            console.warn(`Failed to fetch user details for addresses`);
+            return {};
+          }
+          return await userResponse.json();
+        } catch (error) {
+          console.error(`Error fetching user details for addresses:`, error);
+          return {};
         }
-        return acc;
-      }, [] as EnrichedRankingData[]);
+      };
+
+      // Group rankings by FID, wallet address, and tgUsername
+      const fidGroup: number[] = [];
+      const addressGroup: string[] = [];
+      const tgUsernameGroup: { ranking: RankingData; tgUsername: string }[] = [];
+
+      data.data.forEach(ranking => {
+        if (ranking.fid) {
+          fidGroup.push(ranking.fid);
+        } else if (ranking.walletAddress) {
+          addressGroup.push(ranking.walletAddress);
+        } else if (ranking.tgUsername) {
+          tgUsernameGroup.push({ ranking, tgUsername: ranking.tgUsername });
+        }
+      });
+
+      // Fetch user details in batches
+      const userDetailsByFid = await fetchUserDetailsByFids(fidGroup);
+      const userDetailsByAddress = await fetchUserDetailsByAddresses(addressGroup);
+
+      // Combine all user details
+      const enrichedRankings: EnrichedRankingData[] = data.data.map(ranking => {
+        let userDetails: User | null | undefined;
+        if (ranking.fid) {
+          userDetails = userDetailsByFid.find(user => user.fid === ranking.fid) || null;
+        } else if (ranking.walletAddress) {
+          userDetails = userDetailsByAddress[ranking.walletAddress.toLowerCase()]?.[0] || null;
+        } else if (ranking.tgUsername) {
+          userDetails = {
+            username: ranking.tgUsername,
+            display_name: ranking.tgUsername,
+            pfp_url: null,
+          } as User;
+        } else {
+          userDetails = null;
+        }
+
+        return {
+          ...ranking,
+          userDetails,
+          fid: ranking.fid || null,
+          walletAddress: ranking.walletAddress || null,
+          tgUsername: ranking.tgUsername || null,
+        };
+      });
 
       const filteredAndSortedRankings = filterAndSortRankings(enrichedRankings);
       setAllRankings(filteredAndSortedRankings);
 
       let userRankingIndex = -1;
       const rankingsWithoutCurrentUser = filteredAndSortedRankings.filter((ranking, index) => {
-        if (ranking.walletAddress.toLowerCase() === address?.toLowerCase()) {
+        if (ranking.walletAddress?.toLowerCase() === address?.toLowerCase()) {
           userRankingIndex = index;
           return false;
         }
@@ -316,17 +455,11 @@ const LeaderboardListing: React.FC = () => {
                       rel="noopener noreferrer"
                       className="flex justify-center"
                     >
-                      {userRanking.userDetails?.pfp_url ? (
+                      {userRanking.userDetails?.pfp_url && (
                         <img
                           alt="Profile"
                           src={userRanking.userDetails.pfp_url}
                           className="h-8 w-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          layout="fill"
-                          alt="Profile"
-                          src="/icons/profile_icon.svg"
                         />
                       )}
                     </a>
@@ -346,7 +479,7 @@ const LeaderboardListing: React.FC = () => {
                       className="text-xs text-B-60 lg:text-lg"
                     >
                       {userRanking.userDetails?.username ||
-                        `${userRanking.walletAddress.slice(0, 6)}...${userRanking.walletAddress.slice(-4)}`}
+                        `${userRanking.walletAddress?.slice(0, 6)}...${userRanking.walletAddress?.slice(-4)}`}
                     </a>
                   </div>
                   <p className="text-center text-xs text-B-60 lg:text-base">
@@ -379,17 +512,11 @@ const LeaderboardListing: React.FC = () => {
                           rel="noopener noreferrer"
                           className="flex justify-center"
                         >
-                          {ranking.userDetails?.pfp_url ? (
+                          {ranking.userDetails?.pfp_url && (
                             <img
                               alt="Profile"
                               src={ranking.userDetails.pfp_url}
                               className="h-8 w-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <Image
-                              layout="fill"
-                              alt="Profile"
-                              src="/icons/profile_icon.svg"
                             />
                           )}
                         </a>
@@ -409,7 +536,7 @@ const LeaderboardListing: React.FC = () => {
                           className="truncate text-xs text-B-60 lg:text-lg"
                         >
                           {ranking.userDetails?.username ||
-                            `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
+                            `${ranking.walletAddress?.slice(0, 6)}...${ranking.walletAddress?.slice(-4)}`}
                         </a>
                       </div>
                       <p className="text-center text-xs text-B-60 lg:text-base">

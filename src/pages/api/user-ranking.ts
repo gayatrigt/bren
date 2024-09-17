@@ -11,28 +11,6 @@ interface User {
     pfp_url?: string | null;
 }
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-
-async function getUserProfile(username: string) {
-    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChat`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            chat_id: `@${username}`,
-        }),
-    });
-
-    if (!response.ok) {
-        console.error(`Failed to get user profile for @${username}: ${response.statusText}`);
-        return null;
-    }
-
-    const data = await response.json();
-    return data.result;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { address, sort } = req.query
 
@@ -53,7 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             include: {
                 userRankings: true,
                 farcasterDetails: true,
-                telegramDetails: true
             }
         });
 
@@ -69,7 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 include: {
                     userRankings: true,
                     farcasterDetails: true,
-                    telegramDetails: true
                 }
             });
         }
@@ -90,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const rank = usersAbove + 1
 
-        let userDetails: User;
+        let userDetails: User = {};
 
         if (user.farcasterDetails && user.farcasterDetails.fid) {
             userDetails = {
@@ -99,71 +75,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 display_name: user.farcasterDetails.display_name || undefined,
                 pfp_url: user.farcasterDetails.pfp || undefined
             };
-        } else if (user.telegramDetails && user.telegramDetails.userId) {
-            // Fetch Telegram user details
-            const telegramProfile = await getUserProfile(user.telegramDetails.userId);
-
-            if (telegramProfile) {
-                userDetails = {
-                    username: telegramProfile.username,
-                    display_name: telegramProfile.first_name + (telegramProfile.last_name ? ` ${telegramProfile.last_name}` : ''),
-                    pfp_url: telegramProfile.photo?.big_file_id ? `https://api.telegram.org/file/bot${BOT_TOKEN}/${telegramProfile.photo.big_file_id}` : undefined
-                };
-
-                // Update TelegramDetails in the database
-                await db.telegramDetails.update({
-                    where: { id: user.id },
-                    data: {
-                        userId: userDetails.username,
-                        first_name: telegramProfile.first_name,
-                        last_name: telegramProfile.last_name,
-                        pfp: userDetails.pfp_url
-                    }
-                });
-            } else {
-                userDetails = {
-                    username: user.telegramDetails.userId,
-                    display_name: user.telegramDetails.display_name,
-                    pfp_url: user.telegramDetails.pfp
-                };
-            }
-        } else {
-            // Fetch user details from Neynar as before
+        } else if (user.tgUsername) {
+            userDetails = {
+                username: user.tgUsername,
+                display_name: user.tgUsername,
+                pfp_url: undefined
+            };
+        } else if (user.fid) {
+            // Fetch user details from Neynar only if fid is not null
             const userResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/neynar-users?fids=${user.fid}`);
             if (!userResponse.ok) {
                 throw new Error("Failed to fetch user details from Neynar");
             }
             const userData: { users: User[] } = await userResponse.json();
 
-            userDetails = {
-                fid: userData.users[0]?.fid,
-                username: userData.users[0]?.username,
-                display_name: userData.users[0]?.display_name,
-                pfp_url: userData.users[0]?.pfp_url
-            };
+            if (userData.users && userData.users.length > 0) {
+                userDetails = {
+                    fid: userData.users[0]?.fid,
+                    username: userData.users[0]?.username,
+                    display_name: userData.users[0]?.display_name,
+                    pfp_url: userData.users[0]?.pfp_url
+                };
 
-            // Upsert FarcasterDetails
-            await db.farcasterDetails.upsert({
-                where: { userId: user.id },
-                update: {
-                    fid: userDetails.fid,
-                    username: userDetails.username,
-                    display_name: userDetails.display_name,
-                    pfp: userDetails.pfp_url
-                },
-                create: {
-                    userId: user.id,
-                    fid: userDetails.fid,
-                    username: userDetails.username,
-                    display_name: userDetails.display_name,
-                    pfp: userDetails.pfp_url
-                }
-            });
+                // Upsert FarcasterDetails
+                await db.farcasterDetails.upsert({
+                    where: { userId: user.id },
+                    update: {
+                        fid: userDetails.fid,
+                        username: userDetails.username,
+                        display_name: userDetails.display_name,
+                        pfp: userDetails.pfp_url
+                    },
+                    create: {
+                        userId: user.id,
+                        fid: userDetails.fid,
+                        username: userDetails.username,
+                        display_name: userDetails.display_name,
+                        pfp: userDetails.pfp_url
+                    }
+                });
+            }
         }
 
         const enrichedRanking: EnrichedRankingData = {
             ...userRanking,
-            fid: user.fid || undefined,
+            fid: user.fid || null,
+            tgUsername: user.tgUsername || null,
             walletAddress: user.walletAddress || '',
             rank,
             userDetails,

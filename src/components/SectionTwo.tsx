@@ -4,9 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { cn } from "~/utils/helpers";
 import { FaChevronDown } from "react-icons/fa6";
+import { createIcon } from '@download/blockies';
 
 export interface RankingData {
-  fid: number | undefined;
+  fid: number | null;
+  tgUsername: string | null;
   walletAddress: string;
   tipsReceived: number | null;
   tipsSent: number | null;
@@ -21,6 +23,7 @@ export interface ApiResponse {
 
 export interface Rankings {
   fid: number;
+  tgUsername: string;
   walletAddress: string;
   tipsReceived: number;
   tipsSent: number;
@@ -37,20 +40,25 @@ export interface Pagination {
 }
 
 export interface User {
-  fid?: number | undefined;
+  fid?: number | null;
   username?: string;
   display_name?: string | null;
   pfp_url?: string | null;
+  tgUsername?: string | null
 }
 
-export interface EnrichedRankingData extends RankingData {
-  userDetails?: User | null | undefined;
-  rank?: number;
+export interface EnrichedRankingData extends Omit<RankingData, 'fid' | 'walletAddress' | 'tgUsername'> {
+  fid: number | null;
+  walletAddress: string | null;
+  tgUsername: string | null;
+  userDetails: User | null;
+  rank: number;
   displayRank?: number;
 }
 
 export interface UserRank {
   fid: number;
+  tgUsername: string;
   walletAddress: string;
   tipsReceived: number;
   tipsSent: number;
@@ -99,31 +107,147 @@ const SectionTwo = () => {
     }
   };
 
+  // const fetchRankings = async () => {
+  //   setLoading(true);
+  //   try {
+  //     // Fetch rankings
+  //     const response = await fetch(
+  //       `/api/db-rankings?sort=${selectedTab?.key}&page=1&limit=10`,
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch rankings");
+  //     }
+  //     const data: ApiResponse = await response.json();
+
+  //     // Fetch user details
+  //     const fids = data.data.map((ranking) => ranking.fid).join(",");
+  //     const userResponse = await fetch(`/api/neynar-users?fids=${fids}`);
+  //     if (!userResponse.ok) {
+  //       throw new Error("Failed to fetch user details");
+  //     }
+  //     const userData: { users: User[] } = await userResponse.json();
+
+  //     // Combine ranking data with user details
+  //     const enrichedRankings = data.data.map((ranking) => ({
+  //       ...ranking,
+  //       userDetails: userData.users.find((user) => user.fid === ranking.fid),
+  //     }));
+
+  //     setRankings(enrichedRankings);
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchRankings = async () => {
     setLoading(true);
     try {
-      // Fetch rankings
+      console.log("Fetching top rankings...");
       const response = await fetch(
-        `/api/db-rankings?sort=${selectedTab?.key}&page=1&limit=10`,
+        `/api/db-rankings?sort=${selectedTab?.key}&page=1&limit=10`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch rankings");
       }
       const data: ApiResponse = await response.json();
+      console.log("Top ranking data:", data);
 
-      // Fetch user details
-      const fids = data.data.map((ranking) => ranking.fid).join(",");
-      const userResponse = await fetch(`/api/neynar-users?fids=${fids}`);
-      if (!userResponse.ok) {
-        throw new Error("Failed to fetch user details");
-      }
-      const userData: { users: User[] } = await userResponse.json();
+      console.log("Fetching user details...");
 
-      // Combine ranking data with user details
-      const enrichedRankings = data.data.map((ranking) => ({
-        ...ranking,
-        userDetails: userData.users.find((user) => user.fid === ranking.fid),
-      }));
+      // Helper function to fetch user details by FIDs
+      const fetchUserDetailsByFids = async (fids: number[]): Promise<User[]> => {
+        try {
+          const userResponse = await fetch(`/api/neynar-users?fids=${fids.join(',')}`);
+          if (!userResponse.ok) {
+            console.warn(`Failed to fetch user details for FIDs`);
+            return [];
+          }
+          const userData: { users: User[] } = await userResponse.json();
+          return userData.users;
+        } catch (error) {
+          console.error(`Error fetching user details for FIDs:`, error);
+          return [];
+        }
+      };
+
+      // Helper function to fetch user details by wallet addresses
+      const fetchUserDetailsByAddresses = async (addresses: string[]): Promise<Record<string, User[]>> => {
+        try {
+          const userResponse = await fetch(`/api/neynar-users-by-address?addresses=${addresses.join(',')}`);
+          if (!userResponse.ok) {
+            console.warn(`Failed to fetch user details for addresses`);
+            return {};
+          }
+          return await userResponse.json();
+        } catch (error) {
+          console.error(`Error fetching user details for addresses:`, error);
+          return {};
+        }
+      };
+
+      // Helper function to generate blockies
+      const generateBlockies = (seed: string): string => {
+        const icon = createIcon({
+          seed: seed,
+          size: 8,
+          scale: 4,
+        });
+        return icon.toDataURL();
+      };
+
+      // Group rankings by FID, wallet address, and tgUsername
+      const fidGroup: number[] = [];
+      const addressGroup: string[] = [];
+      const tgUsernameGroup: { ranking: RankingData; tgUsername: string }[] = [];
+
+      data.data.forEach(ranking => {
+        if (ranking.fid) {
+          fidGroup.push(ranking.fid);
+        } else if (ranking.walletAddress) {
+          addressGroup.push(ranking.walletAddress);
+        } else if (ranking.tgUsername) {
+          tgUsernameGroup.push({ ranking, tgUsername: ranking.tgUsername });
+        }
+      });
+
+      // Fetch user details in batches
+      const userDetailsByFid = await fetchUserDetailsByFids(fidGroup);
+      const userDetailsByAddress = await fetchUserDetailsByAddresses(addressGroup);
+
+      // Combine all user details
+      const enrichedRankings: EnrichedRankingData[] = data.data.map((ranking, index) => {
+        let userDetails: User | null | undefined;
+        if (ranking.fid) {
+          userDetails = userDetailsByFid.find(user => user.fid === ranking.fid) || null;
+        } else if (ranking.walletAddress) {
+          userDetails = userDetailsByAddress[ranking.walletAddress.toLowerCase()]?.[0] || null;
+        } else if (ranking.tgUsername) {
+          userDetails = {
+            username: ranking.tgUsername,
+            display_name: ranking.tgUsername,
+            pfp_url: null,
+          } as User;
+        } else {
+          userDetails = null;
+        }
+
+        // Generate blockies if no pfp_url
+        if (userDetails && !userDetails.pfp_url) {
+          const seed = userDetails.username || userDetails.display_name || ranking.tgUsername || 'random';
+          userDetails.pfp_url = generateBlockies(seed);
+        }
+
+        return {
+          ...ranking,
+          userDetails,
+          fid: ranking.fid || null,
+          walletAddress: ranking.walletAddress || null,
+          tgUsername: ranking.tgUsername || null,
+          rank: index + 1, // Assign rank based on the order
+        };
+      });
 
       setRankings(enrichedRankings);
     } catch (error) {
@@ -223,17 +347,11 @@ const SectionTwo = () => {
                       rel="noopener noreferrer"
                       className="flex justify-center"
                     >
-                      {userRanking.userDetails?.pfp_url ? (
+                      {userRanking.userDetails?.pfp_url && (
                         <img
                           alt="Profile"
                           src={userRanking.userDetails.pfp_url}
                           className="h-8 w-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          layout="fill"
-                          alt="Profile"
-                          src="/icons/profile_icon.svg"
                         />
                       )}
                     </a>
@@ -246,15 +364,22 @@ const SectionTwo = () => {
                         layout="fill"
                       />
                     </div>
-                    <a
-                      href={`https://warpcast.com/${userRanking.userDetails?.username || ""}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-B-60 lg:text-lg"
-                    >
-                      {userRanking.userDetails?.username ||
-                        `${userRanking.walletAddress.slice(0, 6)}...${userRanking.walletAddress.slice(-4)}`}
-                    </a>
+                    {userRanking.fid ? (
+                      <a
+                        href={`https://warpcast.com/${userRanking.userDetails?.username || ""}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-B-60 lg:text-lg"
+                      >
+                        {userRanking.userDetails?.username ||
+                          `${userRanking.walletAddress.slice(0, 6)}...${userRanking.walletAddress.slice(-4)}`}
+                      </a>
+                    ) : (
+                      <span className="text-xs text-B-60 lg:text-lg">
+                        {userRanking.userDetails?.username ||
+                          `${userRanking.walletAddress.slice(0, 6)}...${userRanking.walletAddress.slice(-4)}`}
+                      </span>
+                    )}
                   </div>
                   <p className="text-center text-xs text-B-60 lg:text-base">
                     {userRanking[selectedTab?.key as keyof RankingData] || 0}
@@ -277,17 +402,11 @@ const SectionTwo = () => {
                       rel="noopener noreferrer"
                       className="flex justify-center"
                     >
-                      {ranking.userDetails?.pfp_url ? (
+                      {ranking.userDetails?.pfp_url && (
                         <img
                           alt="Profile"
                           src={ranking.userDetails.pfp_url}
                           className="h-8 w-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          layout="fill"
-                          alt="Profile"
-                          src="/icons/profile_icon.svg"
                         />
                       )}
                     </a>
@@ -300,15 +419,15 @@ const SectionTwo = () => {
                         layout="fill"
                       />
                     </div>
-                    <a
+                    {/* <a
                       href={`https://warpcast.com/${ranking.userDetails?.username || ""}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="truncate text-xs text-B-60 lg:text-lg"
-                    >
-                      {ranking.userDetails?.username ||
-                        `${ranking.walletAddress.slice(0, 6)}...${ranking.walletAddress.slice(-4)}`}
-                    </a>
+                    > */}
+                    {ranking.userDetails?.username ||
+                      `${ranking.walletAddress?.slice(0, 6)}...${ranking.walletAddress?.slice(-4)}`}
+
                   </div>
 
                   <p className="text-center text-xs text-B-60 lg:text-base">

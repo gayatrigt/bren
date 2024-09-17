@@ -35,7 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     user: {
                         select: {
                             fid: true,
-                            walletAddress: true
+                            walletAddress: true,
+                            tgUsername: true
                         }
                     }
                 }
@@ -50,6 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...user,
             fid: user.user?.fid,
             walletAddress: user.user.walletAddress,
+            tgUsername: user.user.tgUsername,
             rank: skip + index + 1, // Calculate rank based on the current page and index
             user: undefined // Remove the nested user object
         }))
