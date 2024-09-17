@@ -119,13 +119,13 @@ const ProfilePage = () => {
             <div className="border-B-12 rounded-[32px] border bg-[rgba(43,0,53,0.04)] px-10 py-[60px] ">
               <h1 className="mb-3 text-xl text-pu-100">Weekly Allocation</h1>
               <h2 className="text-[48px] font-bold text-pu-100">300</h2>
-              <p className="mt-3 text-xl text-pu-100">
+              {/* <p className="mt-3 text-xl text-pu-100">
                 Based on your bren cred, frequency of shoutouts and contributions
                 of your invites.
-              </p>
+              </p> */}
             </div>
           )}
-          {userData.invites !== undefined && (
+          {/* {userData.invites !== undefined && (
             <div className="border-B-12 rounded-[32px] border bg-[rgba(43,0,53,0.04)] px-10 py-[60px] ">
               <h1 className="mb-3 text-xl text-pu-100">Invites</h1>
               <h2 className="text-[48px] font-bold text-pu-100">{userData.invites}</h2>
@@ -133,7 +133,7 @@ const ProfilePage = () => {
                 Number of based frens you have invited to the bren network.
               </p>
             </div>
-          )}
+          )} */}
         </div>
       </section>
     </>
