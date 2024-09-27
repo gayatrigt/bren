@@ -285,7 +285,6 @@ async function checkEligibility(fromFid: number): Promise<boolean | undefined> {
         }
 
         const result = await response.json();
-
         if (result.isWhitelisted === true) {
             console.log('User is whitelisted');
             return true;
