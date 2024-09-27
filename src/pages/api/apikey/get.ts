@@ -18,6 +18,11 @@ async function generateApiCredentials(platform: Platform) {
     console.log(`Generated credentials for ${platform}:`);
     console.log(`API Key: ${credential.apiKey}`);
     console.log(`API Secret: ${credential.apiSecret}`);
+
+    return {
+        Platform,
+        "API": credential.apiKey
+    }
 }
 
 async function main() {
