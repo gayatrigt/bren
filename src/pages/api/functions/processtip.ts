@@ -3,6 +3,7 @@ import { getUserById } from "~/server/neynar";
 import { botReply, botReplyFail, botReplySuccess } from "./botReply";
 import { NeynarUser } from "~/contracts/NeynarUser";
 import { Platform } from "@prisma/client";
+import { getWeekStart } from "../user-event";
 
 const validHashtags = ["integrity", "teamwork", "tenacity", "creativity", "optimism"];
 
@@ -123,6 +124,37 @@ export async function processTip(
             console.log('Attempting to create transaction in database:', data);
 
             const createdTransaction = await db.transaction.create({ data });
+
+            // Record the point event
+            await db.pointEvent.create({
+                data: {
+                    userId: toUser.id,
+                    event: "FARCASTER_TIP",
+                    points: tipAmount,
+                    platform: "FARCASTER",
+                },
+            });
+
+            // Update weekly points
+            const weekStart = getWeekStart();
+            await db.weeklyPoints.upsert({
+                where: {
+                    userId_weekStart_platform: {
+                        userId: fromUser.id,
+                        weekStart,
+                        platform: "FARCASTER",
+                    },
+                },
+                update: {
+                    pointsEarned: { increment: tipAmount },
+                },
+                create: {
+                    userId: fromUser.id,
+                    weekStart,
+                    pointsEarned: tipAmount,
+                    platform: "FARCASTER",
+                },
+            });
 
             await updateUserRankings(fromUser.id, tipAmount, false);
             await updateUserRankings(toUser.id, tipAmount, true);

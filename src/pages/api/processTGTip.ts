@@ -131,6 +131,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 },
             });
 
+            // Record the point event
+            await db.pointEvent.create({
+                data: {
+                    userId: toUser.id,
+                    event: "TELEGRAM_TIP",
+                    points: Number(amount),
+                    platform: "TELEGRAM",
+                },
+            });
+
+            // Update weekly points
+            const weekStart = getStartOfWeek();
+            await db.weeklyPoints.upsert({
+                where: {
+                    userId_weekStart_platform: {
+                        userId: fromUser.id,
+                        weekStart,
+                        platform: "TELEGRAM",
+                    },
+                },
+                update: {
+                    pointsEarned: { increment: Number(amount) },
+                },
+                create: {
+                    userId: fromUser.id,
+                    weekStart,
+                    pointsEarned: Number(amount),
+                    platform: "TELEGRAM",
+                },
+            });
+
             console.log("Updating user rankings...");
             await db.userRankings.upsert({
                 where: { userId: fromUserId },

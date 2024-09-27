@@ -112,7 +112,7 @@ async function handleCheckPoints(username: string): Promise<string> {
         return 'No ranking information found for this user.';
     }
 
-    return `You have ${userRankings.tipsReceived.toFixed(2)} $bren points in total.`
+    return `You have ${userRankings.tipsReceived?.toFixed(2)} $bren points in total.`
 }
 
 async function handleValue(): Promise<string> {

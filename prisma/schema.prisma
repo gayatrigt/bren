@@ -8,6 +8,18 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+model ApiCredential {
+  id        String   @id @default(cuid())
+  platform  Platform
+  apiKey    String   @unique
+  apiSecret String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([platform, apiKey])
+}
+
 model User {
   id                   String            @id @default(cuid())
   name                 String?
@@ -25,6 +37,7 @@ model User {
   receivedTransactions Transaction[]     @relation("ToUser")
   userRankings         UserRankings?
   weeklyPoints         WeeklyPoints[]
+  pointEvents          PointEvent[]
   accounts             Account[]
   sessions             Session[]
 }
@@ -61,6 +74,16 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PointEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  event     Event
+  points    Int
+  platform  Platform
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model FarcasterDetails {
@@ -116,10 +139,10 @@ model Transaction {
 model UserRankings {
   id                String @id @default(uuid())
   userId            String @unique
-  tipsReceived      Float  @default(0)
-  tipsSent          Float  @default(0)
-  tipsReceivedCount Int    @default(0)
-  tipsSentCount     Int    @default(0)
+  tipsReceived      Float? @default(0)
+  tipsSent          Float? @default(0)
+  tipsReceivedCount Int?   @default(0)
+  tipsSentCount     Int?   @default(0)
   user              User   @relation(fields: [userId], references: [id])
 }
 
@@ -183,4 +206,15 @@ model Winner {
 enum Platform {
   FARCASTER
   TELEGRAM
+  ONBOARD
+  BLOCASSET
+}
+
+enum Event {
+  CREATED_ACCOUNT
+  SET_UP_PROFILE
+  COMPLETED_KYC
+  ADDED_PROJECT
+  FARCASTER_TIP
+  TELEGRAM_TIP
 }
