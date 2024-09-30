@@ -6,7 +6,7 @@ interface ApiCredential {
     apiSecret: string;
 }
 
-async function fetchApiKeys() {
+export async function fetchApiKeys() {
     try {
         const response = await fetch('https://bren-staging.vercel.app/api/apikey/get');
         const data: unknown = await response.json();
