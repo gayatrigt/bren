@@ -29,10 +29,13 @@ export default async function handler(
         toUsername,
         message,
         hashtagValue,
-        castHash,
+        txHash,
     } = req.body;
 
     try {
+        // Generate castHash by appending toFid to txHash
+        const castHash = `${txHash}${toFid}`;
+
         const result = await processTip(
             tipAmount,
             fromFid,
