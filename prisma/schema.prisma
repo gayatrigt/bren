@@ -193,12 +193,13 @@ model Round {
 }
 
 model Winner {
-  id          String  @id
-  fid         Int
-  amount      Float
-  amountBuild Float? // New field for amounts starting with non-zero
-  rounds      Round[]
-  roundIds    Int[]
+  id            String  @id
+  fid           Int
+  amount        Float
+  amountBuild   Float?
+  walletAddress String?
+  rounds        Round[]
+  roundIds      Int[]
 
   @@index([amount(sort: Desc), fid(sort: Asc)])
 }

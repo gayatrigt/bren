@@ -31,7 +31,6 @@ const EVENT_POINTS: { [key in EventType]: number } = {
     [Event.TELEGRAM_TIP]: 10
 };
 
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     if (req.method !== 'POST') {

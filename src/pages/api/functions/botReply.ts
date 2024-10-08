@@ -114,6 +114,37 @@ export async function botReplySuccess(userHash: string, castText: string, fid: n
     }
 }
 
+export async function bottip(castText: string, fid: number): Promise<BotReplyResult> {
+    try {
+
+        // Post the new reply
+        const response = await sdk.postCast({
+            signer_uuid: process.env.SIGNER_UUID,
+            text: castText,
+            embeds: [
+                {
+                    url: `https://bren-frames.vercel.app/frames/base-builds/${fid}`
+                }
+            ],
+        }, { api_key: process.env.NEYNAR_API_KEY });
+
+        const castHash = response.data.cast.hash;
+
+        return {
+            success: true,
+            message: "Reply posted successfully.",
+            castHash: castHash
+        };
+
+    } catch (error) {
+        console.error('Error in botReply:', error);
+        return {
+            success: false,
+            message: "An error occurred while posting the reply."
+        };
+    }
+}
+
 export async function botReminder(username: string | null, fid: number): Promise<BotReplyResult> {
     try {
 

@@ -109,38 +109,54 @@ export default async function handler(
         const roundsData = await roundsResponse.json();
         console.log(`Fetched ${roundsData.rounds.length} rounds.`);
 
+        const startDate = new Date('2024-10-03T00:00:00.000Z');
+        const endDate = new Date('2024-10-07T23:59:59.999Z');
+
         const roundsToProcess = [];
 
         for (const round of roundsData.rounds) {
-            const existingRound = await db.round.findUnique({
-                where: { id: round.id },
-            });
+            const votingEndsAt = new Date(round.votingEndsAt);
 
-            if (existingRound) {
-                console.log(`Round ${round.id} already exists, will check for new winners...`);
-                roundsToProcess.push(round.id);
-            } else {
-                await db.round.create({
-                    data: {
-                        id: round.id,
-                        name: round.name,
-                        startsAt: new Date(round.startsAt),
-                        votingEndsAt: new Date(round.votingEndsAt),
-                    },
+            if (votingEndsAt >= startDate && votingEndsAt <= endDate) {
+                const existingRound = await db.round.findUnique({
+                    where: { id: round.id },
                 });
-                console.log(`Added new round ${round.id}.`);
-                roundsToProcess.push(round.id);
+
+                if (existingRound) {
+                    console.log(`Round ${round.id} already exists, will check for new winners...`);
+                    roundsToProcess.push(round.id);
+                } else {
+                    await db.round.create({
+                        data: {
+                            id: round.id,
+                            name: round.name,
+                            startsAt: new Date(round.startsAt),
+                            votingEndsAt: new Date(round.votingEndsAt),
+                        },
+                    });
+                    console.log(`Added new round ${round.id}.`);
+                    roundsToProcess.push(round.id);
+                }
+            } else {
+                console.log(`Skipping round ${round.id} as it's outside the specified date range.`);
             }
         }
 
-        console.log('Fetching winners for all rounds in parallel...');
-        const winnersData = await Promise.all(roundsToProcess.map(fetchWinners));
+        console.log(`Processing ${roundsToProcess.length} rounds within the specified date range.`);
 
-        console.log('Processing winners...');
-        await Promise.all(winnersData.map(({ roundId, winners }) => processWinners(roundId, winners)));
+        if (roundsToProcess.length > 0) {
+            console.log('Fetching winners for filtered rounds in parallel...');
+            const winnersData = await Promise.all(roundsToProcess.map(fetchWinners));
 
-        console.log('Data fetching and saving completed successfully.');
-        res.status(200).json({ message: 'Data fetched and saved successfully' });
+            console.log('Processing winners...');
+            await Promise.all(winnersData.map(({ roundId, winners }) => processWinners(roundId, winners)));
+
+            console.log('Data fetching and saving completed successfully.');
+            res.status(200).json({ message: `Data fetched and saved successfully for ${roundsToProcess.length} rounds.` });
+        } else {
+            console.log('No rounds found within the specified date range.');
+            res.status(200).json({ message: 'No rounds found within the specified date range.' });
+        }
     } catch (error) {
         console.error('Error fetching and saving data:', error);
         res.status(500).json({
