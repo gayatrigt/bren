@@ -80,6 +80,7 @@ model PointEvent {
   id        String   @id @default(uuid())
   userId    String
   event     Event
+  amount    Float?
   points    Int
   platform  Platform
   createdAt DateTime @default(now())
@@ -218,4 +219,10 @@ enum Event {
   ADDED_PROJECT
   FARCASTER_TIP
   TELEGRAM_TIP
+  P2P_TRX
+  P2P_TRX_IP
+  CREATED_CARD
+  CARD_TRX
+  SWAP_SAME_CHAIN
+  SWAP_CROSS_CHAIN
 }

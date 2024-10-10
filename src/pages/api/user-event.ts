@@ -2,59 +2,65 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import { db } from '~/server/db';
 
-// Define the Event enum as a const object
-const Event = {
-    CREATED_ACCOUNT: "CREATED_ACCOUNT",
-    SET_UP_PROFILE: "SET_UP_PROFILE",
-    COMPLETED_KYC: "COMPLETED_KYC",
-    ADDED_PROJECT: "ADDED_PROJECT",
-    FARCASTER_TIP: "FARCASTER_TIP",
-    TELEGRAM_TIP: "TELEGRAM_TIP"
-} as const;
+// Define the Event enum
+enum Event {
+    CREATED_ACCOUNT = "CREATED_ACCOUNT",
+    COMPLETED_KYC = "COMPLETED_KYC",
+    CREATED_CARD = "CREATED_CARD",
+    CARD_TRX = "CARD_TRX",
+    P2P_TRX = "P2P_TRX",
+    P2P_TRX_IP = "P2P_TRX_IP",
+    SWAP_SAME_CHAIN = "SWAP_SAME_CHAIN",
+    SWAP_CROSS_CHAIN = "SWAP_CROSS_CHAIN",
+}
 
-// Define the Platform enum as a const object
-const Platform = {
-    ONBOARD: "ONBOARD",
-    BLOCASSET: "BLOCASSET",
-} as const;
+// Define the Platform enum
+enum Platform {
+    ONBOARD = "ONBOARD",
+    BLOCASSET = "BLOCASSET",
+}
 
-type EventType = typeof Event[keyof typeof Event];
-type PlatformType = typeof Platform[keyof typeof Platform];
-
-// Point values for each event (adjust as needed)
-const EVENT_POINTS: { [key in EventType]: number } = {
-    [Event.CREATED_ACCOUNT]: 10,
-    [Event.SET_UP_PROFILE]: 20,
-    [Event.COMPLETED_KYC]: 30,
-    [Event.ADDED_PROJECT]: 40,
-    [Event.FARCASTER_TIP]: 10,
-    [Event.TELEGRAM_TIP]: 10
+// Point values and multipliers for each event
+const EVENT_POINTS: { [key in Event]: number | ((amount: number) => number) } = {
+    [Event.CREATED_ACCOUNT]: 25,
+    [Event.COMPLETED_KYC]: 50,
+    [Event.CREATED_CARD]: 50,
+    [Event.CARD_TRX]: (amount: number) => amount * 10,
+    [Event.P2P_TRX]: (amount: number) => amount * 10,
+    [Event.P2P_TRX_IP]: (amount: number) => amount * 15,
+    [Event.SWAP_SAME_CHAIN]: (amount: number) => amount * 20,
+    [Event.SWAP_CROSS_CHAIN]: (amount: number) => amount * 20,
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+// Events that don't require an amount
+const EVENTS_WITHOUT_AMOUNT = [Event.CREATED_ACCOUNT, Event.COMPLETED_KYC, Event.CREATED_CARD];
 
+// Events that require an amount
+const EVENTS_WITH_AMOUNT = [Event.CARD_TRX, Event.P2P_TRX, Event.P2P_TRX_IP, Event.SWAP_CROSS_CHAIN, Event.SWAP_SAME_CHAIN];
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
     const apiKey = req.headers['x-api-key'] as string;
-    const apiSecret = req.headers['x-api-secret'] as string;
-
-    console.log('API Key:', apiKey);
-    console.log('API Secret:', apiSecret ? '******' : 'undefined');
 
     const isValid = await validateApiKeyAndSecret(apiKey);
     if (!isValid) {
         return res.status(401).json({ error: 'Unauthorized access' });
     }
 
-    const { walletAddress, event, platform, additionalData } = req.body;
+    const { walletAddress, event, platform, amount, additionalData } = req.body;
 
-    console.log('Extracted fields:');
-    console.log('walletAddress:', walletAddress);
-    console.log('event:', event);
-    console.log('platform:', platform);
-    console.log('additionalData:', additionalData);
+    // Validate required fields
+    const missingFields = [];
+    if (!walletAddress) missingFields.push('walletAddress');
+    if (!event) missingFields.push('event');
+    if (!platform) missingFields.push('platform');
+
+    if (missingFields.length > 0) {
+        return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
+    }
 
     // Validate request body
     if (!walletAddress || !event || !platform) {
@@ -62,24 +68,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Validate event
-    if (!Object.values(Event).includes(event as EventType)) {
+    if (!Object.values(Event).includes(event as Event)) {
         return res.status(400).json({ error: 'Invalid event' });
     }
 
     // Validate platform
-    if (!Object.values(Platform).includes(platform as PlatformType)) {
+    if (!Object.values(Platform).includes(platform as Platform)) {
         return res.status(400).json({ error: 'Invalid platform' });
     }
 
-    console.log('herrrrrrrrrherrrrrrrrrherrrrrrrrrherrrrrrrrrherrrrrrrrrherrrrrrrrr')
+    // Check if amount is provided for events that don't require it
+    if (EVENTS_WITHOUT_AMOUNT.includes(event as Event) && amount !== undefined) {
+        return res.status(400).json({ error: `Amount should not be provided for ${event} event` });
+    }
+
+    // Check if amount is missing for events that require it
+    if (EVENTS_WITH_AMOUNT.includes(event as Event) && (amount === undefined || amount <= 0)) {
+        return res.status(400).json({ error: `A positive amount is required for ${event} event` });
+    }
 
     try {
         // Find or create user
         let user = await db.user.findUnique({ where: { walletAddress } });
-        console.log("🚀 ~ handler ~ user:", user)
 
         if (!user) {
-            console.log('herrrrrrrrrherrrrrrrrrherrrrrrrrrherrrrrrrrrherrrrrrrrrherrrrrrrrr')
             user = await db.user.create({
                 data: {
                     walletAddress,
@@ -90,15 +102,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Calculate points earned
-        const pointsEarned = EVENT_POINTS[event as EventType];
+        const pointValue = EVENT_POINTS[event as Event];
+        let pointsEarned: number;
+
+        if (typeof pointValue === 'function') {
+            if (amount === undefined) {
+                return res.status(400).json({ error: 'Amount is required for this event type' });
+            }
+            pointsEarned = pointValue(amount);
+        } else {
+            pointsEarned = pointValue;
+        }
 
         // Record the point event
         await db.pointEvent.create({
             data: {
                 userId: user.id,
-                event: event as EventType,
+                event: event as Event,
+                amount: amount || null,
                 points: pointsEarned,
-                platform: platform as PlatformType,
+                platform: platform as Platform,
             },
         });
 
@@ -109,7 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 userId_weekStart_platform: {
                     userId: user.id,
                     weekStart,
-                    platform: platform as PlatformType,
+                    platform: platform as Platform,
                 },
             },
             update: {
@@ -119,7 +142,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 userId: user.id,
                 weekStart,
                 pointsEarned,
-                platform: platform as PlatformType,
+                platform: platform as Platform,
             },
         });
 
@@ -139,11 +162,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const totalPoints = await db.pointEvent.aggregate({
             where: { userId: user.id },
             _sum: { points: true },
-        });
-
-        // Get updated UserRankings
-        const userRankings = await db.userRankings.findUnique({
-            where: { userId: user.id },
         });
 
         return res.status(200).json({
@@ -166,14 +184,10 @@ async function validateApiKeyAndSecret(apiKey: string): Promise<boolean> {
         where: { apiKey },
     });
 
-    if (!credential || !credential.isActive) {
-        return false;
-    }
-
-    return true;
+    return credential?.isActive ?? false;
 }
 
-export function getWeekStart(): Date {
+function getWeekStart(): Date {
     const now = new Date();
     const dayOfWeek = now.getUTCDay();
     const diff = now.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
