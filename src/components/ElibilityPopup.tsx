@@ -64,7 +64,7 @@ const Popup: React.FC<PopupProps> = ({ isOpen, onClose, address }) => {
                                     text-pu-100 shadow-[4px_4px_0px_0px_#000] lg:w-32 lg:text-base text-center
                                     hover:bg-gray-100 transition-colors duration-200"
                                     >
-                                        {eligibilityData.isEligible ? 'Tip Now' : 'Get Invite'}
+                                        {eligibilityData.isEligible ? 'Tip Now' : 'Download Onboard'}
                                     </a>
                                 </div>
                             )}

@@ -187,7 +187,7 @@ async function validateApiKeyAndSecret(apiKey: string): Promise<boolean> {
     return credential?.isActive ?? false;
 }
 
-function getWeekStart(): Date {
+export function getWeekStart(): Date {
     const now = new Date();
     const dayOfWeek = now.getUTCDay();
     const diff = now.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);

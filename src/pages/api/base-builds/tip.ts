@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { db } from "~/server/db";
 import { Platform } from "@prisma/client";
-import { getWeekStart } from "../user-event";
 import { botReplySuccess, bottip } from "../functions/botReply";
+import { getWeekStart } from '../user-event';
 
 type ApiResponse = {
     success: boolean;
